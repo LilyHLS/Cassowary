@@ -1,0 +1,182 @@
+---
+title: "ASA_Project_Cassowary"
+format: html
+editor: visual
+---
+
+**Which factors influence the southern cassowary abundance?** Is there any implication for strike mortality management ?
+
+![](images/clipboard-1642165662.png)**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and wildlife traffic strikes occurring within geo-referenced 1 km grid cells.
+
+| Variable name | Ecological reference |
+|----|----|
+| Rainforest.P (quantitative continue) | proportion of rain forest within the grid |
+| Residential.P (quantitative continue) | proportion of residential area within the grid |
+| Fruit.P (quantitative continue) | proportion of fruit crop within the grid |
+| Other.P (quantitative continue) | proportion of other area within the grid |
+| Total_Road (quantitative continue) | length of road within the grid |
+| Sightings (semi-quantitative counting) | visual contact of cassowary |
+| Strikes (quantitative binary) | mortality of cassowary due to road traffic |
+| Residential.01 (quantitative binary) | presence /absence of residential area |
+| Fruit.01 (quantitative binary) | presence /absence of fruit crop |
+| Dresid (quantitative continue) | distance of the road to residential area |
+| Dfruit (quantitative continue) | distance of the road to fruit crop area |
+
+**Tab. 1.** Table of the cassowary variables and their ecological meaning.
+
+Hypothesis:
+
+**R Libraries**
+
+```{r dowload libraries}
+# Models
+library(nlme) #glm mixed and gls
+library(DHARMa) #diagnostic for lm, glm
+library(tidyverse) #for data cleaning, ordering
+library(ggplot2)
+# Spatial analysis 
+library(geoR) #for spatial object to perform geostatistic
+library(sp)
+library(sf)
+library(pgirmess) #for spatial correlogram
+library(spdep) #to extracted the neighbors is a spatial data
+library(ade4) #used for plotting spatial data
+library(spatialreg) #used for spatial data modelling
+library(spgwr) #to run geographically weighted regression
+```
+
+# I) Data exploration
+
+```{r data importation, echo = F}
+cassowary <- read.table("data_cassowary.txt", h = T)
+summary(cassowary)
+```
+
+```{r data NA, echo = F}
+#Is NA?  
+colSums(is.na(cassowary))
+```
+
+There is no NA values in our data set
+
+```{r data response variable, echo = F}
+#Don't show the code 
+par(mfrow=c(2,2),      
+    mar=c(4,4,2,1),           
+    bg="gray95",              
+    col.axis="gray20",      
+    col.lab="gray20",     
+    col.main="gray20",     
+    cex.axis=0.9,      
+    cex.lab=1) 
+col_transp <- adjustcolor("aquamarine3", alpha.f=0.5) 
+# Boxplot 
+boxplot(cassowary$Sightings,         
+        col=col_transp, border="gray30",         
+        ylab='Cassowary observation',         
+        main = 'Boxplot',         
+        notch=F) 
+# Cleveland plot 
+dotchart(cassowary$Sightings,          
+         pch=16, col=col_transp,          
+         xlab='Cassowary observation',          
+         main = 'Cleveland plot',          
+         cex=0.8) 
+# Histogram 
+hist(cassowary$Sightings,      
+     col=col_transp, 
+     border="white",      
+     xlab="Cassowary observation",      
+     main = 'Histogram',      
+     breaks=20)
+# Quantile-Quantile plot 
+qqnorm(cassowary$Sightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot") 
+qqline(cassowary$Sightings, col='red', lwd=2)
+```
+
+Their is some outliers values in the sightings distribution. The cassowary is a solitary and difficult animal to observe due to its statute of vulnerable specie and its elusive behavior (Moore, 2007). It is aberrant to find values above 100 individuals in a 1km grid because in average there is less than 3 individuals/km² and the population was estimate to fewer than 1500 birds in 2012 (Moore, 2007; Romagnano *et* al., 2012). In the breeding season a female may leave approximation 4 eggs per clutch to the male, and once the ovulation period is over and the egg hatch, adults can kill each other (Romagnano *et* al., 2012). With this information, we decide to remove sightings above 10 because data could be collecting during the breeding period.
+
+```{r remove Y outliers, echo = F}
+sum(cassowary$Sightings>10)
+cassowary <- cassowary%>%
+  filter(Sightings<10)
+```
+
+Their is 42 points where sightings are above 10 individuals. Those values are removed.
+
+```{r data response variable without outliers, echo = F}
+#Don't show the code 
+par(mfrow=c(2,2),      
+    mar=c(4,4,2,1),           
+    bg="gray95",              
+    col.axis="gray20",      
+    col.lab="gray20",     
+    col.main="gray20",     
+    cex.axis=0.9,      
+    cex.lab=1) 
+col_transp <- adjustcolor("aquamarine3", alpha.f=0.5) 
+# Boxplot 
+boxplot(cassowary$Sightings,         
+        col=col_transp, border="gray30",         
+        ylab='Cassowary observation',         
+        main = 'Boxplot',         
+        notch=F) 
+# Cleveland plot 
+dotchart(cassowary$Sightings,          
+         pch=16, col=col_transp,          
+         xlab='Cassowary observation',          
+         main = 'Cleveland plot',          
+         cex=0.8) 
+# Histogram 
+hist(cassowary$Sightings,      
+     col=col_transp, 
+     border="white",      
+     xlab="Cassowary observation",      
+     main = 'Histogram',      
+     breaks=20)
+# Quantile-Quantile plot 
+qqnorm(cassowary$Sightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot") 
+qqline(cassowary$Sightings, col='red', lwd=2)
+```
+
+Their is still outliers but their are ecologicaly acceptable. The distribution is now following a Poisson distribution, but their is still a lot of locations with 0 observation as cassowary is a rare specie. A log transformation is suggesting for the Y variable.
+
+```{r data response variable log transformation, echo = F}
+par(mfrow=c(1,3),      
+    mar=c(4,4,2,1),           
+    bg="gray95",              
+    col.axis="gray20",      
+    col.lab="gray20",     
+    col.main="gray20",     
+    cex.axis=0.9,      
+    cex.lab=1) 
+col_transp <- adjustcolor("aquamarine3", alpha.f=0.5) 
+
+cassowary$LogSightings<-log(cassowary$Sightings + 1)
+
+# Log Sightings
+# Cleveland plot
+dotchart(cassowary$LogSightings,          
+         pch=16, col=col_transp,          
+         xlab='Log observation',          
+         main = 'Cleveland plot',          
+         cex=0.8) 
+# Histogram
+hist(cassowary$LogSightings,      
+     col=col_transp, 
+     border="white",      
+     xlab="Log observation",      
+     main = 'Histogram',      
+     breaks=20)
+# Quantile-Quantile plot
+qqnorm(cassowary$LogSightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot")
+qqline(cassowary$LogSightings, col='red', lwd=2)
+```
+
+The log +1 transformation allow to get a better representation of the Poisson distribution of the Y variable.
+
+```{r spatial configuration, echo = F}
+plot(cassowary[,2:3])
+```
+
+The points are distributed continuously, even if some locations are missing.
