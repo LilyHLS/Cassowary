@@ -9,18 +9,11 @@ editor: visual
 ![](images/clipboard-1642165662.png)**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and wildlife traffic strikes occurring within geo-referenced 1 km grid cells.
 
 | Variable name                          | Ecological reference                           |
+
 |------------------------------------|------------------------------------|
-| Rainforest.P (quantitative continue)   | proportion of rain forest within the grid      |
-| Residential.P (quantitative continue)  | proportion of residential area within the grid |
-| Fruit.P (quantitative continue)        | proportion of fruit crop within the grid       |
-| Other.P (quantitative continue)        | proportion of other area within the grid       |
-| Total_Road (quantitative continue)     | length of road within the grid                 |
-| Sightings (semi-quantitative counting) | visual contact of cassowary                    |
-| Strikes (quantitative binary)          | mortality of cassowary due to road traffic     |
-| Residential.01 (quantitative binary)   | presence /absence of residential area          |
-| Fruit.01 (quantitative binary)         | presence /absence of fruit crop                |
-| Dresid (quantitative continue)         | distance of the road to residential area       |
-| Dfruit (quantitative continue)         | distance of the road to fruit crop area        |
+
+|---------------------------------|---------------------------------------|
+
 
 **Tab. 1.** Table of the cassowary variables and their ecological meaning.
 
@@ -203,3 +196,6 @@ mapview(p_abs %>% filter(abs == "abs"),
           zcol = "Sightings", layer.name = "Abondance")
 ```
 
+```{r}
+geos=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Sightings)))
+```
