@@ -8,12 +8,11 @@ editor: visual
 
 ![](images/clipboard-1642165662.png)**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and wildlife traffic strikes occurring within geo-referenced 1 km grid cells.
 
-| Variable name                          | Ecological reference                           |
+| Variable name \| Ecological reference \|
 
-|------------------------------------|------------------------------------|
+\|------------------------------------\|------------------------------------\|
 
-|---------------------------------|---------------------------------------|
-
+\|---------------------------------\|---------------------------------------\|
 
 **Tab. 1.** Table of the cassowary variables and their ecological meaning.
 
@@ -178,6 +177,7 @@ plot(cassowary_filtr[,2:3])
 The points are distributed continuously, even if some locations are missing.
 
 ## Cartography
+
 ```{r}
 cassowary %>% 
   mutate(abs = ifelse(Sightings == 0, "abs", "pres")) %>%
@@ -195,6 +195,10 @@ mapview(p_abs %>% filter(abs == "abs"),
   mapview(p_abs %>% filter(abs == "pres"), 
           zcol = "Sightings", layer.name = "Abondance")
 ```
+
+## Statistical Analysis : 
+
+Now, we have to investigate if there is spatial dependency in the variables.
 
 ```{r}
 geos=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Sightings)))
