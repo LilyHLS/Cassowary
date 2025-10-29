@@ -2,17 +2,39 @@
 title: "ASA_Project_Cassowary"
 format: html
 editor: visual
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  df_print: paged
+  pdf_document:
+    toc: yes
+    number_sections: yes
+fig.align: 'center'
 ---
 
-**Which factors influence the southern cassowary abundance?** Is there any implication for strike mortality management ?
+A study, published by Dwyer et *al.* (2016) in the Journal of Applied Ecology, uses citizen science data to model the risk of traffic strike with southern cassowaries (*Casuarius casuarius johnsonii*) in Australia.  
+
+Traffic strike data were recorded between 1992 and 2012, by Queensland Parks and Wildlife Services. Sightings data were recorded between 1999 and 2012, on 1 km² grid-cells over the study area. For this analysis, it would appear that we only have traffic strike and count data, summed over the entire study period (?) per grid-cells. 
+For each grid-cells, habitat variables (@Tab1) and road location were also compiled by the authors.
+
+**In our study, we want to determine which factors influence the southern cassowary abundance. And if there is any implication for strike mortality management.**
 
 ![](images/clipboard-1642165662.png)**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and wildlife traffic strikes occurring within geo-referenced 1 km grid cells.
 
-| Variable name \| Ecological reference \|
 
-\|------------------------------------\|------------------------------------\|
-
-\|---------------------------------\|---------------------------------------\|
+| Variable name                          | Ecological reference                           |
+|------------------------------------|------------------------------------|
+| Rainforest.P (quantitative continue)   | proportion of rain forest within the grid      |
+| Residential.P (quantitative continue)  | proportion of residential area within the grid |
+| Fruit.P (quantitative continue)        | proportion of fruit crop within the grid       |
+| Other.P (quantitative continue)        | proportion of other area within the grid       |
+| Total_Road (quantitative continue)     | length of road within the grid                 |
+| Sightings (semi-quantitative counting) | visual contact of cassowary                    |
+| Strikes (quantitative binary)          | mortality of cassowary due to road traffic     |
+| Residential.01 (quantitative binary)   | presence /absence of residential area          |
+| Fruit.01 (quantitative binary)         | presence /absence of fruit crop                |
+| Dresid (quantitative continue)         | distance of the road to residential area       |
+| Dfruit (quantitative continue)         | distance of the road to fruit crop area        |
 
 **Tab. 1.** Table of the cassowary variables and their ecological meaning.
 
@@ -39,7 +61,7 @@ library(dplyr)
 library(mapview)
 ```
 
-# I) Data exploration
+# Data exploration
 
 ```{r data importation, echo = F}
 cassowary <- read.table("data_cassowary.txt", h = T)
@@ -196,18 +218,20 @@ mapview(p_abs %>% filter(abs == "abs"),
           zcol = "Sightings", layer.name = "Abondance")
 ```
 
-## Statistical Analysis :
+# Statistical Analysis
+
+## Spatial dependency
 
 Now, we have to investigate if there is spatial dependency in the variables.
 
 ```{r}
-geo_sight=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Sightings)))
-geo_rain=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Rainforest.P)))
-geo_resid=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.P)))
-geo_fruit=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.P)))
-geo_troad=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Total_Road)))
-geo_dresid=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Dresid)))
-geo_dfruit=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Dfruit)))
+geo_sight = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Sightings)))
+geo_rain = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Rainforest.P)))
+geo_resid = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Residential.P)))
+geo_fruit = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Fruit.P)))
+geo_troad = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Total_Road)))
+geo_dresid = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Dresid)))
+geo_dfruit = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Dfruit)))
 ```
 
 In order to plot the semi variance plot (semivariogram) for the variables, especially the responde variable, we need to look at the distribution of distance between points.
