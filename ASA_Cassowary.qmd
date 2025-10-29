@@ -26,6 +26,7 @@ library(nlme) #glm mixed and gls
 library(DHARMa) #diagnostic for lm, glm
 library(tidyverse) #for data cleaning, ordering
 library(ggplot2)
+library(MASS)
 # Spatial analysis 
 library(geoR) #for spatial object to perform geostatistic
 library(sp)
@@ -198,16 +199,19 @@ mapview(p_abs %>% filter(abs == "abs"),
 
 ## Statistical Analysis :
 
-Now, we have to investigate if there is spatial dependency in the variables.
+**1.) Without any modification of the data :**
+
+First, we have to investigate if there is spatial dependency in the variables. For this first model, related to the first problematic **"Which factors influence the southern cassowary abundance?"** we do not take into account *Strikes* and the variables linked to the road (*Total_Road, Dresid and Dfruit*).
 
 ```{r}
 geo_sight=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Sightings)))
-geo_rain=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Rainforest.P)))
-geo_resid=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.P)))
-geo_fruit=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.P)))
-geo_troad=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Total_Road)))
-geo_dresid=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Dresid)))
-geo_dfruit=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Dfruit)))
+geo_residb=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.01)))
+geo_fruitb=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.01)))
+geo_rainp=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Rainforest.P)))
+geo_residp=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.P)))
+geo_fruitp=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.P)))
+geo_otherp=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Other.P)))
+
 ```
 
 In order to plot the semi variance plot (semivariogram) for the variables, especially the responde variable, we need to look at the distribution of distance between points.
@@ -220,14 +224,87 @@ We can see that 95% of the distance are under 25 000, 30 000 (km ?).
 
 ```{r}
 semivar_sight=variog(geo_sight,option="bin",max.dist=30000)
-semivar_rain=variog(geo_rain,option="bin",max.dist=30000)
-semivar_resid=variog(geo_resid,option="bin",max.dist=30000)
-semivar_fruit=variog(geo_fruit,option="bin",max.dist=30000)
+semivar_rain=variog(geo_rainp,option="bin",max.dist=30000)
+semivar_residb=variog(geo_residb,option="bin",max.dist=30000)
+semivar_fruitb=variog(geo_fruitb,option="bin",max.dist=30000)
+semivar_residp=variog(geo_residp,option="bin",max.dist=30000)
+semivar_fruitp=variog(geo_fruitp,option="bin",max.dist=30000)
+semivar_otherp=variog(geo_otherp,option="bin",max.dist=30000)
 
 plot(semivar_sight, main="Empirical semi variogram for sightings of cassowary")
 plot(semivar_rain, main="Empirical semi variogram for proportion of rainforest")
-plot(semivar_resid, main="Empirical semi variogram for proportion of residential area")
-plot(semivar_fruit, main="Empirical semi variogram for proportion of fruit crop")
+plot(semivar_residb, main="Empirical semi variogram for presence/absence of residential area")
+plot(semivar_fruitb, main="Empirical semi variogram for presence/absence of fruit crop")
+plot(semivar_residp, main="Empirical semi variogram for proportion of residential area")
+plot(semivar_fruitp, main="Empirical semi variogram for proportion of fruit crop")
+plot(semivar_otherp, main="Empirical semi variogram for proportion of other")
 ```
 
-In all the plots, the values between points seem to become less similar when distance increases until it reaches 15 000 (km?) because from this point, the variance seems to decrease and so points start becoming more similar again. These types of graphs are typical of a periodic phenomenon, also known as patches or clusters.
+As we can see on all the plots, except maybe for the semi variogram for presence/absence of residential area, the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (km?) because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
+
+These types of graphs are usually typical of a periodic phenomenon, also known as patches or clusters, however, here we did not apply any transformation on the data. In fact, *Sighthings* are counting data (Poisson law), *Residential.P* and *Fruit.P* present a lot of zeros (zero-inflated method), *Residential.01* and *Fruit.01* are presence/absence data (Binomial law).
+
+This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
+
+**2.) With modification of the data** :
+
+Let's first try with the *Sightings* data.
+
+```{r}
+glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + Residential.01 + Fruit.01, data = cassowary, family = poisson(link = "log"))
+```
+
+Overdispersion check (scale parameter calculation) :
+
+```{r}
+E1 <- resid(glm_pois, type = "pearson") # (Y - mu) / sqrt(mu)
+N  <- nrow(cassowary)
+p  <- length(coef(glm_pois))
+sum(E1^2) / (N - p)
+
+```
+
+Here, the Pearson residuals are way above 1, so there is overdispersion which can be due to outliers, missing interactions and zero inflation.
+
+```{r}
+glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + Residential.01 + Fruit.01, data=cassowary)
+
+drop1(glm_NB,test="Chi")
+```
+
+```{r}
+glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P + Residential.01 + Fruit.01, data=cassowary)
+
+drop1(glm_NB,test="Chi")
+```
+
+```{r}
+glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P + Fruit.01, data=cassowary)
+
+drop1(glm_NB,test="Chi")
+```
+
+```{r}
+glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P, data=cassowary)
+
+drop1(glm_NB,test="Chi")
+```
+
+Here, there is the final model with only significant effects. Again, we check for overdispersion :
+
+```{r}
+E1 <- resid(glm_NB, type = "pearson") # (Y - mu) / sqrt(mu)
+N  <- nrow(cassowary)
+p  <- length(coef(glm_NB))
+sum(E1^2) / (N - p)
+```
+
+No more overdispersion.
+
+```{r}
+geo_resid=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(E1)))
+semivar_resid <- variog(geo_resid, option = "bin", max.dist = 30000)
+plot(semivar_resid, main = "Semi-variogramme des résidus NB")
+```
+
+We still have an abnormal semi variogram ???
