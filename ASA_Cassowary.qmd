@@ -1,27 +1,26 @@
 ---
 title: "ASA_Project_Cassowary"
-format: html
-editor: visual
 date: "`r Sys.Date()`"
-output:
-  word_document: default
-  df_print: paged
-  pdf_document:
-    toc: yes
-    number_sections: yes
+format:
+  html:
+    toc: true
+    toc-floating: true
+    number-sections: true
+    code-fold: true
+    theme: cosmo
+    highlight-style: pygments
 fig.align: 'center'
 ---
 
-A study, published by Dwyer et *al.* (2016) in the Journal of Applied Ecology, uses citizen science data to model the risk of traffic strike with southern cassowaries (*Casuarius casuarius johnsonii*) in Australia.  
+A study, published by Dwyer et *al.* (2016) in the Journal of Applied Ecology, uses citizen science data to model the risk of traffic strike with southern cassowaries (*Casuarius casuarius johnsonii*) in Australia.
 
-Traffic strike data were recorded between 1992 and 2012, by Queensland Parks and Wildlife Services. Sightings data were recorded between 1999 and 2012, on 1 km² grid-cells over the study area. For this analysis, it would appear that we only have traffic strike and count data, summed over the entire study period (?) per grid-cells. 
-For each grid-cells, habitat variables (@Tab1) and road location were also compiled by the authors.
+Traffic strike data were recorded between 1992 and 2012, by Queensland Parks and Wildlife Services. Sightings data were recorded between 1999 and 2012, on 1 km² grid-cells over the study area. For this analysis, it would appear that we only have traffic strike and count data, summed over the entire study period (?) per grid-cells. For each grid-cells, habitat variables (@tbl-descrva) and road location were also compiled by the authors.
 
 **In our study, we want to determine which factors influence the southern cassowary abundance. And if there is any implication for strike mortality management.**
 
 ![](images/clipboard-1642165662.png)**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and wildlife traffic strikes occurring within geo-referenced 1 km grid cells.
 
-
+::: {#tbl-descrva}
 | Variable name                          | Ecological reference                           |
 |------------------------------------|------------------------------------|
 | Rainforest.P (quantitative continue)   | proportion of rain forest within the grid      |
@@ -36,9 +35,19 @@ For each grid-cells, habitat variables (@Tab1) and road location were also compi
 | Dresid (quantitative continue)         | distance of the road to residential area       |
 | Dfruit (quantitative continue)         | distance of the road to fruit crop area        |
 
-**Tab. 1.** Table of the cassowary variables and their ecological meaning.
+Table of the cassowary variables and their ecological meaning.
+:::
 
-Hypothesis:
+To answer these questions, we will use....     
+It is highly likely that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test spatial autocorrelation with .....    
+
+*Hypothesis:*   
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE, cash=TRUE)
+```
 
 **R Libraries**
 
@@ -59,25 +68,28 @@ library(ade4) #used for plotting spatial data
 library(spatialreg) #used for spatial data modelling
 library(spgwr) #to run geographically weighted regression
 library(dplyr)
-library(mapview)
+library(mapview) # maps with openstreetMa
 ```
 
 # Data exploration
 
-```{r data importation, echo = F}
+```{r data importation}
 cassowary <- read.table("data_cassowary.txt", h = T)
 summary(cassowary)
 ```
 
-```{r data NA, echo = F}
+```{r data NA}
 #Is NA?  
 colSums(is.na(cassowary))
 ```
 
 There is no NA values in our data set
 
-```{r data response variable, echo = F}
-#Don't show the code 
+## Distribution of the response variables 
+```{r data response variable}
+#| label: fig-sighting_descr
+#| fig-cap: "Distribution of the response variable : Cassowary sightings"
+
 par(mfrow = c(2, 2),
     mar = c(4, 4, 2, 1),
     bg = "gray95",
@@ -87,31 +99,35 @@ par(mfrow = c(2, 2),
     cex.axis = 0.9,
     cex.lab = 1) 
 col_transp <- adjustcolor("aquamarine3", alpha.f=0.5) 
-# Boxplot 
+
+# Boxplot ----------------------------------------------------------------------
 boxplot(cassowary$Sightings,
         col = col_transp, border = "gray30",
         ylab = 'Cassowary observation',
         main = 'Boxplot',
         notch = F) 
-# Cleveland plot 
+
+# Cleveland plot ---------------------------------------------------------------
 dotchart(cassowary$Sightings,
          pch = 16, col = col_transp,
          xlab = 'Cassowary observation',
          main = 'Cleveland plot',
          cex = 0.8)
-# Histogram
+
+# Histogram --------------------------------------------------------------------
 hist(cassowary$Sightings,
   col = col_transp,
   border = "white",
   xlab = "Cassowary observation",
   main = 'Histogram',
   breaks = 20)
-# Quantile-Quantile plot 
+
+# Quantile-Quantile plot -------------------------------------------------------
 qqnorm(cassowary$Sightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot") 
 qqline(cassowary$Sightings, col='red', lwd=2)
 ```
 
-Their is some outliers values in the sightings distribution. The cassowary is a solitary and difficult animal to observe due to its statute of vulnerable specie and its elusive behavior (Moore, 2007). It is aberrant to find values above 100 individuals in a 1km grid because in average there is less than 3 individuals/km² and the population was estimate to fewer than 1500 birds in 2012 (Moore, 2007; Romagnano *et* al., 2012). In the breeding season a female may leave approximation 4 eggs per clutch to the male, and once the ovulation period is over and the egg hatch, adults can kill each other (Romagnano *et* al., 2012). With this information, we decide to remove sightings above 10 because data could be collecting during the breeding period.
+Their is some outliers values in the sightings distribution (@fig-sighting_descr). The cassowary is a solitary and difficult animal to observe due to its statute of vulnerable specie and its elusive behavior (Moore, 2007). It is aberrant to find values above 100 individuals in a 1km grid because in average there is less than 3 individuals/km² and the population was estimate to fewer than 1500 birds in 2012 (Moore, 2007; Romagnano *et* al., 2012). In the breeding season a female may leave approximation 4 eggs per clutch to the male, and once the ovulation period is over and the egg hatch, adults can kill each other (Romagnano *et* al., 2012). With this information, we decide to remove sightings above 10 because data could be collecting during the breeding period.   
 
 ```{r remove Y outliers, echo = F}
 sum(cassowary$Sightings > 10)
@@ -121,7 +137,7 @@ cassowary_filtr <- cassowary %>%
 
 Their is 42 points where sightings are above 10 individuals. Those values are removed.
 
-```{r data response variable without outliers, echo = F}
+```{r data response variable without outliers}
 #Don't show the code 
 par(mfrow = c(2, 2),
     mar = c(4, 4, 2, 1),
@@ -160,64 +176,117 @@ qqline(cassowary_filtr$Sightings, col = 'red', lwd = 2)
 Their is still outliers but their are ecologicaly acceptable. The distribution is now following a Poisson distribution, but their is still a lot of locations with 0 observation as cassowary is a rare specie. A log transformation is suggesting for the Y variable.
 
 ```{r data response variable log transformation, echo = F}
-par(mfrow = c(1, 3),
-    mar = c(4, 4, 2, 1),
-    bg = "gray95",
-    col.axis = "gray20",
-    col.lab = "gray20",
-    col.main = "gray20",
-    cex.axis = 0.9,
-    cex.lab = 1) 
-col_transp <- adjustcolor("aquamarine3", alpha.f=0.5) 
-
-cassowary$LogSightings<-log(cassowary_filtr$Sightings + 1)
-
-# Log Sightings
-# Cleveland plot
-dotchart(cassowary_filtr$LogSightings,
-         pch = 16, col = col_transp,
-         xlab = 'Log observation',
-         main = 'Cleveland plot',
-         cex = 0.8) 
-# Histogram
-hist(cassowary_filtr$LogSightings,
-     col = col_transp,
-     border = "white",
-     xlab = "Log observation",
-     main = 'Histogram',
-     breaks = 20)
-# Quantile-Quantile plot
-qqnorm(cassowary_filtr$LogSightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot")
-qqline(cassowary_filtr$LogSightings, col='red', lwd=2)
+# par(mfrow = c(1, 3),
+#     mar = c(4, 4, 2, 1),
+#     bg = "gray95",
+#     col.axis = "gray20",
+#     col.lab = "gray20",
+#     col.main = "gray20",
+#     cex.axis = 0.9,
+#     cex.lab = 1) 
+# col_transp <- adjustcolor("aquamarine3", alpha.f=0.5) 
+# 
+# cassowary$LogSightings<-log(cassowary_filtr$Sightings + 1)
+# 
+# # Log Sightings
+# # Cleveland plot
+# dotchart(cassowary_filtr$LogSightings,
+#          pch = 16, col = col_transp,
+#          xlab = 'Log observation',
+#          main = 'Cleveland plot',
+#          cex = 0.8) 
+# # Histogram
+# hist(cassowary_filtr$LogSightings,
+#      col = col_transp,
+#      border = "white",
+#      xlab = "Log observation",
+#      main = 'Histogram',
+#      breaks = 20)
+# # Quantile-Quantile plot
+# qqnorm(cassowary_filtr$LogSightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot")
+# qqline(cassowary_filtr$LogSightings, col='red', lwd=2)
 ```
 
 The log +1 transformation allow to get a better representation of the Poisson distribution of the Y variable.
 
-```{r spatial configuration, echo = F}
+## Environmental variables 
+### Distribution of environmental variables 
+```{r, fig.show = "hold"}
+#| label: fig-distribenv
+#| fig-cap: "Distribution of environmental variables"
+
+env <- cassowary %>%
+  dplyr::select(Rainforest.P, Residential.P, Fruit.P, Other.P, Total_Road, 
+                Residential.01, Fruit.01, Dresid, Dfruit)
+
+par(mfrow = c(2, 2))
+for(i in 1:ncol(env)){
+  boxplot(env[,i], col = col_transp, border = "gray30", ylab = colnames(env)[i], main = 'Boxplot')
+  dotchart(env[,i], pch = 16, col = col_transp, border = "gray30", xlab = colnames(env)[i], main = 'Cleveland plot') 
+  hist(env[,i], col = col_transp, border = "gray30", xlab = colnames(env)[i], main = "Histogramm")
+  qqnorm(env[, i], pch = 16, col = col_transp, border = "gray30", main = "QQ plot")
+  qqline(env[, i], col = 'red', lwd = 2)
+}
+```
+
+### Correlation between environmental variables 
+
+
+## Spatial data : cartography
+```{r spatial configuration}
+#| label: fig-1rstcarto_cells
+#| fig-cap: "First view of grid-cells distribution"
+
 plot(cassowary_filtr[,2:3])
 ```
 
-The points are distributed continuously, even if some locations are missing.
+The points are distributed continuously, even if some locations are missing (@fig-1rstcarto_cells).
 
-## Cartography
-
+By projecting the locations onto an OpenStreetMap, to look closer : 
 ```{r}
-cassowary %>% 
-  mutate(abs = ifelse(Sightings == 0, "abs", "pres")) %>%
-  st_as_sf(., coords = c("longitude", "latitude"), crs = "EPSG:28355") %>%
-  mapview(zcol = "abs")
-```
+#| label: fig-carto_cells
+#| fig-cap: "Map of presence / absence of Cassowary seen on the grid-cells"
 
-```{r}
-p_abs <- cassowary_filtr %>% 
-  mutate(abs = ifelse(Sightings == 0, "abs", "pres")) %>%
+cassow_sf <- cassowary %>% 
+  mutate(abs = ifelse(Sightings == 0, "abs", "pres"), 
+         morta = ifelse(Strikes == 0, "pas_morta", "morta")) %>%
   st_as_sf(., coords = c("longitude", "latitude"), crs = "EPSG:28355")  
 
-mapview(p_abs %>% filter(abs == "abs"), 
-        zcol = "abs", col.regions = "white", layer.name = "Absence ") + 
-  mapview(p_abs %>% filter(abs == "pres"), 
-          zcol = "Sightings", layer.name = "Abondance")
+cassow_sf %>% 
+  mapview(zcol = "abs", layer.name = "Cassowary sightings", 
+          map.types = c("OpenStreetMap.DE"))
 ```
+The grid-cells are distributed evenly throughout the space, but follow the layout of the roads : therefore, there are no cells in the middle of the rainforests.   
+The difference in the extent of rainforests between the OpenStreetMap base map (@fig-carto_cells) and that of the article is probably due to the time difference between the sources.
+
+```{r}
+#| label: fig-carto_pabs
+#| fig-cap: "Map of Cassowary abundance on the grid-cells"
+
+mapview(cassow_sf %>% filter(abs == "abs"), 
+        zcol = "abs", col.regions = "white", layer.name = "Absence", 
+        map.types = c("OpenStreetMap.DE")) + 
+  mapview(cassow_sf %>% filter(abs == "pres"), 
+          zcol = "Sightings", layer.name = "Abondance", 
+          map.types = c("OpenStreetMap.DE"))
+```
+This map shows that cassowary sightings tend to be more common in the ..... (@fig-carto_pabs)
+
+```{r}
+#| label: fig-carto_collision
+#| fig-cap: "Map of the number of collisions recorded"
+
+mapview(cassow_sf %>% filter(morta == "pas_morta"), 
+        zcol = "Strikes", col.regions = "white", 
+        layer.name = "No traffic strikes recorded", 
+        map.types = c("OpenStreetMap.DE")) + 
+  mapview(cassow_sf %>% filter(morta == "morta"), 
+          zcol = "Strikes", layer.name = "Number of traffic strikes recorded", 
+          map.types = c("OpenStreetMap.DE"))
+```
+
+
+********************************************************************************
 
 # Statistical Analysis
 
@@ -228,14 +297,6 @@ mapview(p_abs %>% filter(abs == "abs"),
 First, we have to investigate if there is spatial dependency in the variables. For this first model, related to the first problematic **"Which factors influence the southern cassowary abundance?"** we do not take into account *Strikes* and the variables linked to the road (*Total_Road, Dresid and Dfruit*).
 
 ```{r}
-geo_sight = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Sightings)))
-geo_rain = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Rainforest.P)))
-geo_resid = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Residential.P)))
-geo_fruit = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Fruit.P)))
-geo_troad = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Total_Road)))
-geo_dresid = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Dresid)))
-geo_dfruit = as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary$Dfruit)))
-
 geo_sight=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Sightings)))
 geo_residb=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.01)))
 geo_fruitb=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.01)))
@@ -253,27 +314,27 @@ hist(dist(cassowary[,2:3]))
 
 We can see that 95% of the distance are under 25 000, 30 000 (km ?).
 
-```{r}
-semivar_sight=variog(geo_sight,option="bin",max.dist=30000)
-semivar_rain=variog(geo_rainp,option="bin",max.dist=30000)
-semivar_residb=variog(geo_residb,option="bin",max.dist=30000)
-semivar_fruitb=variog(geo_fruitb,option="bin",max.dist=30000)
-semivar_residp=variog(geo_residp,option="bin",max.dist=30000)
-semivar_fruitp=variog(geo_fruitp,option="bin",max.dist=30000)
-semivar_otherp=variog(geo_otherp,option="bin",max.dist=30000)
+```{r semivar}
+semivar_sight <- variog(geo_sight, option = "bin", max.dist = 30000, messages = FALSE)
+semivar_rain <- variog(geo_rainp, option = "bin", max.dist = 30000, messages = FALSE)
+semivar_residb <- variog(geo_residb, option = "bin", max.dist = 30000, messages = FALSE)
+semivar_fruitb <- variog(geo_fruitb, option = "bin", max.dist = 30000, messages = FALSE)
+semivar_residp <- variog(geo_residp, option = "bin", max.dist = 30000, messages = FALSE)
+semivar_fruitp <- variog(geo_fruitp, option = "bin", max.dist = 30000, messages = FALSE)
+semivar_otherp <- variog(geo_otherp, option = "bin", max.dist = 30000, messages = FALSE)
 
-plot(semivar_sight, main="Empirical semi variogram for sightings of cassowary")
-plot(semivar_rain, main="Empirical semi variogram for proportion of rainforest")
-plot(semivar_residb, main="Empirical semi variogram for presence/absence of residential area")
-plot(semivar_fruitb, main="Empirical semi variogram for presence/absence of fruit crop")
-plot(semivar_residp, main="Empirical semi variogram for proportion of residential area")
-plot(semivar_fruitp, main="Empirical semi variogram for proportion of fruit crop")
-plot(semivar_otherp, main="Empirical semi variogram for proportion of other")
+plot(semivar_sight, main = "Empirical semi variogram for sightings of cassowary")
+plot(semivar_rain, main = "Empirical semi variogram for proportion of rainforest")
+plot(semivar_residb, main = "Empirical semi variogram for presence/absence of residential area")
+plot(semivar_fruitb, main = "Empirical semi variogram for presence/absence of fruit crop")
+plot(semivar_residp, main = "Empirical semi variogram for proportion of residential area")
+plot(semivar_fruitp, main = "Empirical semi variogram for proportion of fruit crop")
+plot(semivar_otherp, main = "Empirical semi variogram for proportion of other")
 ```
 
-As we can see on all the plots, except maybe for the semi variogram for presence/absence of residential area, the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (km?) because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
+As we can see on all the plots, except maybe for the semi variogram for presence/absence of residential area, **the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (km?)** because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
 
-These types of graphs are usually typical of a periodic phenomenon, also known as patches or clusters, however, here we did not apply any transformation on the data. In fact, *Sighthings* are counting data (Poisson law), *Residential.P* and *Fruit.P* present a lot of zeros (zero-inflated method), *Residential.01* and *Fruit.01* are presence/absence data (Binomial law).
+These types of graphs are usually typical of a **periodic phenomenon**, also known as **patches or clusters**, however, here we did not apply any transformation on the data. In fact, *Sighthings* are counting data (Poisson law), *Residential.P* and *Fruit.P* present a lot of zeros (zero-inflated method), *Residential.01* and *Fruit.01* are presence/absence data (Binomial law).
 
 This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
 
@@ -282,7 +343,9 @@ This is an important thing to consider because behind the variogram, there are 2
 Let's first try with the *Sightings* data.
 
 ```{r}
-glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + Residential.01 + Fruit.01, data = cassowary, family = poisson(link = "log"))
+glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + 
+                  Residential.01 + Fruit.01, 
+                data = cassowary, family = poisson(link = "log"))
 ```
 
 Overdispersion check (scale parameter calculation) :
@@ -292,33 +355,38 @@ E1 <- resid(glm_pois, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
 p  <- length(coef(glm_pois))
 sum(E1^2) / (N - p)
-
 ```
 
 Here, the Pearson residuals are way above 1, so there is overdispersion which can be due to outliers, missing interactions and zero inflation.
 
 ```{r}
-glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + Residential.01 + Fruit.01, data=cassowary)
+glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + 
+                   Residential.01 + Fruit.01, 
+                 data = cassowary)
 
-drop1(glm_NB,test="Chi")
+drop1(glm_NB, test = "Chi")
 ```
 
 ```{r}
-glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P + Residential.01 + Fruit.01, data=cassowary)
+glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P + 
+                   Residential.01 + Fruit.01, 
+                 data = cassowary)
 
-drop1(glm_NB,test="Chi")
+drop1(glm_NB, test = "Chi")
 ```
 
 ```{r}
-glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P + Fruit.01, data=cassowary)
+glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P + Fruit.01, 
+                 data = cassowary)
 
-drop1(glm_NB,test="Chi")
+drop1(glm_NB, test = "Chi")
 ```
 
 ```{r}
-glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P, data=cassowary)
+glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P,
+                 data = cassowary)
 
-drop1(glm_NB,test="Chi")
+drop1(glm_NB, test = "Chi")
 ```
 
 Here, there is the final model with only significant effects. Again, we check for overdispersion :
@@ -333,7 +401,7 @@ sum(E1^2) / (N - p)
 No more overdispersion.
 
 ```{r}
-geo_resid=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(E1)))
+geo_resid <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(E1)))
 semivar_resid <- variog(geo_resid, option = "bin", max.dist = 30000)
 plot(semivar_resid, main = "Semi-variogramme des résidus NB")
 ```
