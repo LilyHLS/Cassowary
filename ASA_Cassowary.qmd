@@ -69,6 +69,8 @@ library(spatialreg) #used for spatial data modelling
 library(spgwr) #to run geographically weighted regression
 library(dplyr)
 library(mapview) # maps with openstreetMa
+library(mapview)
+library(GWmodel)
 ```
 
 # Data exploration
@@ -292,9 +294,11 @@ mapview(cassow_sf %>% filter(morta == "pas_morta"),
 
 ## Spatial dependency
 
-**1.) Without any modification of the data :**
+**1.) Investigation of spatial dependency with the semi variogram :**
 
-First, we have to investigate if there is spatial dependency in the variables. For this first model, related to the first problematic **"Which factors influence the southern cassowary abundance?"** we do not take into account *Strikes* and the variables linked to the road (*Total_Road, Dresid and Dfruit*).
+**a.) Without any modification of the data :**
+
+First, we have to investigate if there is spatial dependency in the variables and because this is a continuous process, we are going to visualize the semi variograms. For this first model, related to the first problematic **"Which factors influence the southern cassowary abundance?"** we do not take into account *Strikes* and the variables linked to the road (*Total_Road, Dresid and Dfruit*).
 
 ```{r}
 geo_sight=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Sightings)))
@@ -312,7 +316,7 @@ In order to plot the semi variance plot (semivariogram) for the variables, espec
 hist(dist(cassowary[,2:3]))
 ```
 
-We can see that 95% of the distance are under 25 000, 30 000 (km ?).
+We can see that 95% of the distance are under 25 000, 30 000 (m ?).
 
 ```{r semivar}
 semivar_sight <- variog(geo_sight, option = "bin", max.dist = 30000, messages = FALSE)
@@ -334,13 +338,15 @@ plot(semivar_otherp, main = "Empirical semi variogram for proportion of other")
 
 As we can see on all the plots, except maybe for the semi variogram for presence/absence of residential area, **the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (km?)** because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
 
+As we can see on all the plots, except maybe for the semi variogram for presence/absence of residential area, the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (m?) because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
+
 These types of graphs are usually typical of a **periodic phenomenon**, also known as **patches or clusters**, however, here we did not apply any transformation on the data. In fact, *Sighthings* are counting data (Poisson law), *Residential.P* and *Fruit.P* present a lot of zeros (zero-inflated method), *Residential.01* and *Fruit.01* are presence/absence data (Binomial law).
 
 This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
 
-**2.) With modification of the data** :
+**b.) With modification of the data** :
 
-Let's first try with the *Sightings* data.
+Let's first try with the *Sightings* data. Maybe, remove the variables *Residential.01* and *Fruit.01* because of redundant information with the variables *Residential.P* and *Fruit.P* ?
 
 ```{r}
 glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + 
@@ -407,3 +413,82 @@ plot(semivar_resid, main = "Semi-variogramme des résidus NB")
 ```
 
 We still have an abnormal semi variogram ???
+
+```{r}
+library(glmmTMB)
+zi_model <- glmmTMB(Sightings ~ covariables + poly(x,2) + poly(y,2),
+                    ziformula = ~1,
+                    family = nbinom2(),
+                    data = cassowary)
+```
+
+**2.) Geostatistical model** :
+
+We are now interested in the relationship that could occur between *Sightings* and the explanatory variables, taking into account the spatial effect.
+
+**a.) Getting the residuals of the NB model** :
+
+Usually, at first, we decide to fit a simple linear regression model to the data. However, here we already know this is not the best model to consider at first, especially because of the counting data we have for our response variable.
+
+```{r}
+glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P, data=cassowary)
+summary(glm_NB)
+```
+
+Test for the autocorrelation in the residuals :
+
+```{r}
+#or Dharma procedure based on a Moran test
+testSpatialAutocorrelation(simulateResiduals(glm_NB),x=cassowary$latitude,y=cassowary$longitude)
+testSpatialAutocorrelation(simulationOutput, x, y)
+```
+
+For each point, we have a local Moran index. The distance based autocorrelation of the residuals is highly significative (p-value \< 2.2e-16). In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between *Sightings* and the explanatory variables.
+
+**b.) GWR because of non-stationarity** :
+
+We define the SpatialPointsDataFrame with both variables and coordinates and we optimize the bandwidth for the kernel function.
+
+```{r}
+geocass=SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary[,c("Rainforest.P","Residential.P","Other.P","Sightings")]))
+gwr.bw=bw.ggwr(Sightings ~ Rainforest.P + Residential.P + Other.P, data = geocass, family = "negbin", kernel = "bisquare",adaptive = FALSE)
+lmgwrD=gwr.generalised(Sightings~Rainforest.P + Residential.P + Other.P,data=geocass, family="negbin", bw= gwr.bw,kernel = "bisquare",adaptive = FALSE)
+summary(lmgwrD)
+```
+
+```{r}
+#the main inetersting output ifs the SDF: a spatialpointsdataframe with the estimates
+names(lmgwrD$SDF)
+#The variables (intercept) and rich_pp give the regression coefficients. 
+#Intercept.se and rich_pp__se give the coefficient standard errors.
+# since it is a spatial object we can map the coefficient and their significativity
+#Significativity of coefficient is not automatically computed by R.
+#But, we can use the coefficient and their standard error to get a t-statistic.
+#Under the null hypothesis, the t ratio follows a t distribution, and hence one can calculate the probability. 
+#To do this, first get the degrees of freedom from the gwr results object
+dfree=lmgwrD$results$edf
+betas <- lmgwrD$SDF$Rainforest.P
+stderrors <- lmgwrD$SDF$Rainforest.P_se
+
+# computation of t statistics
+t_values <- betas / stderrors
+
+# Computation of p value
+p_values <- 2 * (1- pt(abs(t_values), df = dfree))
+p_values<0.05
+
+#you can map the value of the coefficient:
+
+classe_beta<- ifelse(betas < 0, "negative", 
+                  ifelse(betas > 0, "positive", "other"))
+
+classe_p<- ifelse(p_values < 0.05, "p<0.05", 
+                        ifelse(p_values  > 0.05, "p>0.05", "other"))
+
+gwr_signif=data.frame(cassowary$latitude,div35$longitude,betas,classe_beta,p_values,classe_p)
+ggplot(gwr_signif,aes(x=cassowary.latitude,y=cassowary.longitude,color=classe_p, shape=classe_beta,size=betas))+
+  geom_point()+
+  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue", "other" = "gray"))+
+  scale_shape_manual(values = c("positive" = 16, "negative" = 17)) +
+  scale_size_continuous (range=c(1,8),breaks=c(-1.5,-1,-0.5,0,0.5,1,1.5,2))
+```
