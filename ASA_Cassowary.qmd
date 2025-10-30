@@ -22,7 +22,7 @@ Traffic strike data were recorded between 1992 and 2012, by Queensland Parks and
 
 ::: {#tbl-descrva}
 | Variable name                          | Ecological reference                           |
-|---------------------------------|---------------------------------------|
+|----------------------------------------|------------------------------------------------|
 | Rainforest.P (quantitative continue)   | proportion of rain forest within the grid      |
 | Residential.P (quantitative continue)  | proportion of residential area within the grid |
 | Fruit.P (quantitative continue)        | proportion of fruit crop within the grid       |
