@@ -22,7 +22,7 @@ Traffic strike data were recorded between 1992 and 2012, by Queensland Parks and
 
 ::: {#tbl-descrva}
 | Variable name                          | Ecological reference                           |
-|------------------------------------|------------------------------------|
+|---------------------------------|---------------------------------------|
 | Rainforest.P (quantitative continue)   | proportion of rain forest within the grid      |
 | Residential.P (quantitative continue)  | proportion of residential area within the grid |
 | Fruit.P (quantitative continue)        | proportion of fruit crop within the grid       |
@@ -38,12 +38,10 @@ Traffic strike data were recorded between 1992 and 2012, by Queensland Parks and
 Table of the cassowary variables and their ecological meaning.
 :::
 
-To answer these questions, we will use....     
-It is highly likely that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test spatial autocorrelation with .....    
+To answer these questions, we will use....\
+It is highly likely that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test spatial autocorrelation with .....
 
-*Hypothesis:*   
-
-
+*Hypothesis:*
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE, cash=TRUE)
@@ -87,7 +85,8 @@ colSums(is.na(cassowary))
 
 There is no NA values in our data set
 
-## Distribution of the response variables 
+## Distribution of the response variables
+
 ```{r data response variable}
 #| label: fig-sighting_descr
 #| fig-cap: "Distribution of the response variable : Cassowary sightings"
@@ -129,7 +128,7 @@ qqnorm(cassowary$Sightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ pl
 qqline(cassowary$Sightings, col='red', lwd=2)
 ```
 
-Their is some outliers values in the sightings distribution (@fig-sighting_descr). The cassowary is a solitary and difficult animal to observe due to its statute of vulnerable specie and its elusive behavior (Moore, 2007). It is aberrant to find values above 100 individuals in a 1km grid because in average there is less than 3 individuals/km² and the population was estimate to fewer than 1500 birds in 2012 (Moore, 2007; Romagnano *et* al., 2012). In the breeding season a female may leave approximation 4 eggs per clutch to the male, and once the ovulation period is over and the egg hatch, adults can kill each other (Romagnano *et* al., 2012). With this information, we decide to remove sightings above 10 because data could be collecting during the breeding period.   
+Their is some outliers values in the sightings distribution (@fig-sighting_descr). The cassowary is a solitary and difficult animal to observe due to its statute of vulnerable specie and its elusive behavior (Moore, 2007). It is aberrant to find values above 100 individuals in a 1km grid because in average there is less than 3 individuals/km² and the population was estimate to fewer than 1500 birds in 2012 (Moore, 2007; Romagnano *et* al., 2012). In the breeding season a female may leave approximation 4 eggs per clutch to the male, and once the ovulation period is over and the egg hatch, adults can kill each other (Romagnano *et* al., 2012). With this information, we decide to remove sightings above 10 because data could be collecting during the breeding period.
 
 ```{r remove Y outliers, echo = F}
 sum(cassowary$Sightings > 10)
@@ -211,8 +210,10 @@ Their is still outliers but their are ecologicaly acceptable. The distribution i
 
 The log +1 transformation allow to get a better representation of the Poisson distribution of the Y variable.
 
-## Environmental variables 
-### Distribution of environmental variables 
+## Environmental variables
+
+### Distribution of environmental variables
+
 ```{r, fig.show = "hold"}
 #| label: fig-distribenv
 #| fig-cap: "Distribution of environmental variables"
@@ -231,10 +232,10 @@ for(i in 1:ncol(env)){
 }
 ```
 
-### Correlation between environmental variables 
-
+### Correlation between environmental variables
 
 ## Spatial data : cartography
+
 ```{r spatial configuration}
 #| label: fig-1rstcarto_cells
 #| fig-cap: "First view of grid-cells distribution"
@@ -244,7 +245,8 @@ plot(cassowary_filtr[,2:3])
 
 The points are distributed continuously, even if some locations are missing (@fig-1rstcarto_cells).
 
-By projecting the locations onto an OpenStreetMap, to look closer : 
+By projecting the locations onto an OpenStreetMap, to look closer :
+
 ```{r}
 #| label: fig-carto_cells
 #| fig-cap: "Map of presence / absence of Cassowary seen on the grid-cells"
@@ -258,7 +260,8 @@ cassow_sf %>%
   mapview(zcol = "abs", layer.name = "Cassowary sightings", 
           map.types = c("OpenStreetMap.DE"))
 ```
-The grid-cells are distributed evenly throughout the space, but follow the layout of the roads : therefore, there are no cells in the middle of the rainforests.   
+
+The grid-cells are distributed evenly throughout the space, but follow the layout of the roads : therefore, there are no cells in the middle of the rainforests.\
 The difference in the extent of rainforests between the OpenStreetMap base map (@fig-carto_cells) and that of the article is probably due to the time difference between the sources.
 
 ```{r}
@@ -272,6 +275,7 @@ mapview(cassow_sf %>% filter(abs == "abs"),
           zcol = "Sightings", layer.name = "Abondance", 
           map.types = c("OpenStreetMap.DE"))
 ```
+
 This map shows that cassowary sightings tend to be more common in the ..... (@fig-carto_pabs)
 
 ```{r}
@@ -287,8 +291,7 @@ mapview(cassow_sf %>% filter(morta == "pas_morta"),
           map.types = c("OpenStreetMap.DE"))
 ```
 
-
-********************************************************************************
+------------------------------------------------------------------------
 
 # Statistical Analysis
 
@@ -346,7 +349,7 @@ This is an important thing to consider because behind the variogram, there are 2
 
 **b.) With modification of the data** :
 
-Let's first try with the *Sightings* data. Maybe, remove the variables *Residential.01* and *Fruit.01* because of redundant information with the variables *Residential.P* and *Fruit.P* ?
+Let's first try with the *Sightings* data. Maybe, remove the variables *Residential.01* and *Fruit.01* because of redundant information with the variables *Residential.P* and *Fruit.P* ? Transform the variables *Residential.01* and *Fruit.01* into qualitative ones ?
 
 ```{r}
 glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + 
@@ -414,14 +417,6 @@ plot(semivar_resid, main = "Semi-variogramme des résidus NB")
 
 We still have an abnormal semi variogram ???
 
-```{r}
-library(glmmTMB)
-zi_model <- glmmTMB(Sightings ~ covariables + poly(x,2) + poly(y,2),
-                    ziformula = ~1,
-                    family = nbinom2(),
-                    data = cassowary)
-```
-
 **2.) Geostatistical model** :
 
 We are now interested in the relationship that could occur between *Sightings* and the explanatory variables, taking into account the spatial effect.
@@ -445,50 +440,80 @@ testSpatialAutocorrelation(simulationOutput, x, y)
 
 For each point, we have a local Moran index. The distance based autocorrelation of the residuals is highly significative (p-value \< 2.2e-16). In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between *Sightings* and the explanatory variables.
 
-**b.) GWR because of non-stationarity** :
+**b.) GWR because of the non-stationarity** :
 
-We define the SpatialPointsDataFrame with both variables and coordinates and we optimize the bandwidth for the kernel function.
+We define the SpatialPointsDataFrame with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(x+1) transformation on the response variable and the ***gwr*** function for general linear models.
 
 ```{r}
-geocass=SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary[,c("Rainforest.P","Residential.P","Other.P","Sightings")]))
-gwr.bw=bw.ggwr(Sightings ~ Rainforest.P + Residential.P + Other.P, data = geocass, family = "negbin", kernel = "bisquare",adaptive = FALSE)
-lmgwrD=gwr.generalised(Sightings~Rainforest.P + Residential.P + Other.P,data=geocass, family="negbin", bw= gwr.bw,kernel = "bisquare",adaptive = FALSE)
+geocass=SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary[,c("Rainforest.P","Residential.P","Other.P","Fruit.P", "Sightings")]))
+gwr.bw=gwr.sel(log(Sightings+1) ~ Rainforest.P + Residential.P + Other.P + Fruit.P,data=geocass,adapt=FALSE)
+lmgwrD=gwr(log(Sightings+1) ~ Rainforest.P + Residential.P + Other.P + Fruit.P,data=geocass,bandwidth = gwr.bw, se.fit=T,hatmatrix=T)
 summary(lmgwrD)
 ```
 
+The main interesting output is the SDF : the variables (intercept) and "Rainforest.P", "Residential.P", "Other.P"and "Fruit.P" give the regression coefficients. Intercept.se and Rainforest.P\_\_se, Residential.P\_\_se, Other.P\_\_se and Fruit.P\_\_se give the coefficient standard errors.
+
 ```{r}
-#the main inetersting output ifs the SDF: a spatialpointsdataframe with the estimates
 names(lmgwrD$SDF)
-#The variables (intercept) and rich_pp give the regression coefficients. 
-#Intercept.se and rich_pp__se give the coefficient standard errors.
-# since it is a spatial object we can map the coefficient and their significativity
-#Significativity of coefficient is not automatically computed by R.
-#But, we can use the coefficient and their standard error to get a t-statistic.
-#Under the null hypothesis, the t ratio follows a t distribution, and hence one can calculate the probability. 
-#To do this, first get the degrees of freedom from the gwr results object
+```
+
+Since it is a spatial object we can map the coefficient and their significativity. Significativity of coefficient is not automatically computed by R, but, we can use the coefficient and their standard error to get a t-statistic. Under the null hypothesis, the t ratio follows a t distribution, and hence one can calculate the probability. To do this, first get the degrees of freedom from the gwr results object. For instance, we can test the significativity
+
+```{r}
 dfree=lmgwrD$results$edf
-betas <- lmgwrD$SDF$Rainforest.P
-stderrors <- lmgwrD$SDF$Rainforest.P_se
 
-# computation of t statistics
-t_values <- betas / stderrors
+vars <-c("Rainforest.P", "Residential.P", "Other.P", "Fruit.P")
 
-# Computation of p value
-p_values <- 2 * (1- pt(abs(t_values), df = dfree))
-p_values<0.05
+gwr_signif_all <- lapply(vars, function(v) {
+  
+  # Coefficient et erreur standard pour la variable v
+  beta <- lmgwrD$SDF[[v]]
+  se <- lmgwrD$SDF[[paste0(v, "_se")]]
+  
+  # Calculs statistiques
+  t_val <- beta / se
+  p_val <- 2 * (1 - pt(abs(t_val), df = dfree))
+  
+  # Classes
+  classe_beta <- ifelse(beta < 0, "negative",
+                        ifelse(beta > 0, "positive", "zero"))
+  
+  classe_p <- ifelse(p_val < 0.05, "p<0.05", "p>0.05")
+  
+  # Data frame local
+  data.frame(
+    variable = v,
+    x = coordinates(geocass)[,1],
+    y = coordinates(geocass)[,2],
+    beta = beta,
+    se = se,
+    t = t_val,
+    p = p_val,
+    classe_beta = classe_beta,
+    classe_p = classe_p
+  )
+}) %>% bind_rows()
 
-#you can map the value of the coefficient:
 
-classe_beta<- ifelse(betas < 0, "negative", 
-                  ifelse(betas > 0, "positive", "other"))
+#Pour visualiser une variable à la fois
+ggplot(
+  gwr_signif_all %>% filter(variable == "Rainforest.P"),
+  aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)
+) +
+  geom_point() +
+  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
+  scale_shape_manual(values = c("positive" = 16, "negative" = 17, "zero" = 15)) +
+  scale_size_continuous(range = c(1, 8)) +
+  theme_minimal() +
+  ggtitle("GWR local coefficients for Rainforest.P")
 
-classe_p<- ifelse(p_values < 0.05, "p<0.05", 
-                        ifelse(p_values  > 0.05, "p>0.05", "other"))
-
-gwr_signif=data.frame(cassowary$latitude,div35$longitude,betas,classe_beta,p_values,classe_p)
-ggplot(gwr_signif,aes(x=cassowary.latitude,y=cassowary.longitude,color=classe_p, shape=classe_beta,size=betas))+
-  geom_point()+
-  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue", "other" = "gray"))+
+#pour tous visualiser : 
+ggplot(gwr_signif_all,
+       aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
+  geom_point() +
+  facet_wrap(~ variable, scales = "free") +
+  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
   scale_shape_manual(values = c("positive" = 16, "negative" = 17)) +
-  scale_size_continuous (range=c(1,8),breaks=c(-1.5,-1,-0.5,0,0.5,1,1.5,2))
+  theme_minimal() +
+  ggtitle("Cartes locales des coefficients GWR (Poisson ou NegBin)")
 ```
