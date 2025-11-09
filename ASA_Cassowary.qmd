@@ -12,36 +12,37 @@ format:
 fig.align: 'center'
 ---
 
-A study, published by Dwyer et *al.* (2016) in the Journal of Applied Ecology, uses citizen science data to model the risk of traffic strike with southern cassowaries (*Casuarius casuarius johnsonii*) in Australia.
+The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered satus and elusive behavior (Moore, 2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (Moore, 2007). This bird occurres in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (Moore, 2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (Westcott, 1999). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds onver long distance (Westcott, 1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services 2001).
 
-Traffic strike data were recorded between 1992 and 2012, by Queensland Parks and Wildlife Services. Sightings data were recorded between 1999 and 2012, on 1 km² grid-cells over the study area. For this analysis, it would appear that we only have traffic strike and count data, summed over the entire study period (?) per grid-cells. For each grid-cells, habitat variables (@tbl-descrva) and road location were also compiled by the authors.
+It is essential to estimate the factors that may impact the aboundance of southern cassowary population in order to ensure its conservation. In 2026, Dwyer et *al*. used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 on a 1 km² grid-cells covering the study area. \
+Using this data, compiled with the habitat variables and the distance of road location of each grid-cells (@tbl-descrva) by Dwyer et *al.* (2016), we aim to determine **which factors influence the southern cassowary abundance. And whether there are implications for strike mortality management.**
 
-**In our study, we want to determine which factors influence the southern cassowary abundance. And if there is any implication for strike mortality management.**
+![](images/clipboard-1642165662.png)
 
-![](images/clipboard-1642165662.png)**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and wildlife traffic strikes occurring within geo-referenced 1 km grid cells.
+**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and wildlife traffic strikes occurring within geo-referenced 1 km grid cells.
 
 ::: {#tbl-descrva}
-| Variable name                          | Ecological reference                           |
-|----------------------------------------|------------------------------------------------|
-| Rainforest.P (quantitative continue)   | proportion of rain forest within the grid      |
-| Residential.P (quantitative continue)  | proportion of residential area within the grid |
-| Fruit.P (quantitative continue)        | proportion of fruit crop within the grid       |
-| Other.P (quantitative continue)        | proportion of other area within the grid       |
-| Total_Road (quantitative continue)     | length of road within the grid                 |
-| Sightings (semi-quantitative counting) | visual contact of cassowary                    |
-| Strikes (quantitative binary)          | mortality of cassowary due to road traffic     |
-| Residential.01 (quantitative binary)   | presence /absence of residential area          |
-| Fruit.01 (quantitative binary)         | presence /absence of fruit crop                |
-| Dresid (quantitative continue)         | distance of the road to residential area       |
-| Dfruit (quantitative continue)         | distance of the road to fruit crop area        |
+| Variable name | Ecological reference |
+|---------------------------------|---------------------------------------|
+| Rainforest.P (quantitative continue) | proportion of rain forest within the grid |
+| Residential.P (quantitative continue) | proportion of residential area within the grid |
+| Fruit.P (quantitative continue) | proportion of fruit crop within the grid |
+| Other.P (quantitative continue) | proportion of other area within the grid |
+| Total_Road (quantitative continue) | length of road within the grid |
+| Sightings (semi-quantitative counting) | visual contact of cassowary |
+| Strikes (quantitative binary) | mortality of cassowary due to road traffic |
+| Residential.01 (quantitative binary) | presence /absence of residential area |
+| Fruit.01 (quantitative binary) | presence /absence of fruit crop |
+| Dresid (quantitative continue) | distance of the road to residential area |
+| Dfruit (quantitative continue) | distance of the road to fruit crop area |
 
 Table of the cassowary variables and their ecological meaning.
 :::
 
-To answer these questions, we will use....\
+To answer these questions, we will use (model)....\
 It is highly likely that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test spatial autocorrelation with .....
 
-*Hypothesis:*
+*Hypothesis: We assume that southern cassowary is mainly distributed near its natural habitat or in areas where food is available. We expect that high proportions of rainforest and fruits are associated with greatest cassowary abundance. We also assume that traffic strike ocur when the road is at a low distance from the centroïde of the grid cell and that risk is higher when the road connects two favorable habitat.*
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE, cash=TRUE)
@@ -130,86 +131,6 @@ qqline(cassowary$Sightings, col='red', lwd=2)
 
 Their is some outliers values in the sightings distribution (@fig-sighting_descr). The cassowary is a solitary and difficult animal to observe due to its statute of vulnerable specie and its elusive behavior (Moore, 2007). It is aberrant to find values above 100 individuals in a 1km grid because in average there is less than 3 individuals/km² and the population was estimate to fewer than 1500 birds in 2012 (Moore, 2007; Romagnano *et* al., 2012). In the breeding season a female may leave approximation 4 eggs per clutch to the male, and once the ovulation period is over and the egg hatch, adults can kill each other (Romagnano *et* al., 2012). With this information, we decide to remove sightings above 10 because data could be collecting during the breeding period.
 
-```{r remove Y outliers, echo = F}
-sum(cassowary$Sightings > 10)
-cassowary_filtr <- cassowary %>%
-  filter(Sightings < 50)
-```
-
-Their is 42 points where sightings are above 10 individuals. Those values are removed.
-
-```{r data response variable without outliers}
-#Don't show the code 
-par(mfrow = c(2, 2),
-    mar = c(4, 4, 2, 1),
-    bg = "gray95",
-    col.axis = "gray20",
-    col.lab = "gray20",
-    col.main = "gray20",
-    cex.axis = 0.9,
-    cex.lab = 1) 
-col_transp <- adjustcolor("aquamarine3", alpha.f=0.5) 
-# Boxplot 
-boxplot(cassowary_filtr$Sightings,
-        col = col_transp, border = "gray30",
-        ylab = 'Cassowary observation',
-        main = 'Boxplot',
-        notch = F) 
-# Cleveland plot 
-dotchart(cassowary_filtr$Sightings,
-         pch = 16, col = col_transp,
-         xlab = 'Cassowary observation',
-         main = 'Cleveland plot',
-         cex = 0.8) 
-# Histogram 
-hist(cassowary_filtr$Sightings,
-     col = col_transp,
-     border = "white",
-     xlab = "Cassowary observation",
-     main = 'Histogram',
-     breaks = 20)
-# Quantile-Quantile plot 
-qqnorm(cassowary_filtr$Sightings, pch = 16, col = col_transp, xlab = '', ylab = '', main =
-         "QQ plot")
-qqline(cassowary_filtr$Sightings, col = 'red', lwd = 2)
-```
-
-Their is still outliers but their are ecologicaly acceptable. The distribution is now following a Poisson distribution, but their is still a lot of locations with 0 observation as cassowary is a rare specie. A log transformation is suggesting for the Y variable.
-
-```{r data response variable log transformation, echo = F}
-# par(mfrow = c(1, 3),
-#     mar = c(4, 4, 2, 1),
-#     bg = "gray95",
-#     col.axis = "gray20",
-#     col.lab = "gray20",
-#     col.main = "gray20",
-#     cex.axis = 0.9,
-#     cex.lab = 1) 
-# col_transp <- adjustcolor("aquamarine3", alpha.f=0.5) 
-# 
-# cassowary$LogSightings<-log(cassowary_filtr$Sightings + 1)
-# 
-# # Log Sightings
-# # Cleveland plot
-# dotchart(cassowary_filtr$LogSightings,
-#          pch = 16, col = col_transp,
-#          xlab = 'Log observation',
-#          main = 'Cleveland plot',
-#          cex = 0.8) 
-# # Histogram
-# hist(cassowary_filtr$LogSightings,
-#      col = col_transp,
-#      border = "white",
-#      xlab = "Log observation",
-#      main = 'Histogram',
-#      breaks = 20)
-# # Quantile-Quantile plot
-# qqnorm(cassowary_filtr$LogSightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot")
-# qqline(cassowary_filtr$LogSightings, col='red', lwd=2)
-```
-
-The log +1 transformation allow to get a better representation of the Poisson distribution of the Y variable.
-
 ## Environmental variables
 
 ### Distribution of environmental variables
@@ -231,6 +152,8 @@ for(i in 1:ncol(env)){
   qqline(env[, i], col = 'red', lwd = 2)
 }
 ```
+
+Tod do : Description of the distribution:
 
 ### Correlation between environmental variables
 
