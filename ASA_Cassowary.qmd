@@ -12,12 +12,14 @@ format:
 fig.align: 'center'
 ---
 
-The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered satus and elusive behavior (Moore, 2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (Moore, 2007). This bird occurres in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (Moore, 2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (Westcott, 1999). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds onver long distance (Westcott, 1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services 2001).
+![](images/cassowary.jpg){width="672"}
 
-It is essential to estimate the factors that may impact the aboundance of southern cassowary population in order to ensure its conservation. In 2026, Dwyer et *al*. used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 on a 1 km² grid-cells covering the study area. \
+The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered status and elusive behavior (Moore, 2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (Moore, 2007). This bird occur in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (Moore, 2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (Westcott, 1999). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds over long distance (Westcott, 1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services 2001).
+
+It is essential to estimate the factors that may impact the abundance of southern cassowary population in order to ensure its conservation. In 2026, Dwyer et *al*. used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 on a 1 km² grid-cells covering the study area.\
 Using this data, compiled with the habitat variables and the distance of road location of each grid-cells (@tbl-descrva) by Dwyer et *al.* (2016), we aim to determine **which factors influence the southern cassowary abundance. And whether there are implications for strike mortality management.**
 
-![](images/clipboard-1642165662.png)
+![](images/fig1_study_area.png){width="669"}
 
 **Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and wildlife traffic strikes occurring within geo-referenced 1 km grid cells.
 
@@ -42,7 +44,7 @@ Table of the cassowary variables and their ecological meaning.
 To answer these questions, we will use (model)....\
 It is highly likely that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test spatial autocorrelation with .....
 
-*Hypothesis: We assume that southern cassowary is mainly distributed near its natural habitat or in areas where food is available. We expect that high proportions of rainforest and fruits are associated with greatest cassowary abundance. We also assume that traffic strike ocur when the road is at a low distance from the centroïde of the grid cell and that risk is higher when the road connects two favorable habitat.*
+*Hypothesis: We assume that southern cassowary is mainly distributed near its natural habitat or in areas where food is available. We expect that high proportions of rainforest and fruits are associated with greatest cassowary abundance. We also assume that traffic strike occur when the road is at a low distance from the centroid of the grid cell and that risk is higher when the road connects two favorable habitat.*
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE, cash=TRUE)
@@ -129,7 +131,7 @@ qqnorm(cassowary$Sightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ pl
 qqline(cassowary$Sightings, col='red', lwd=2)
 ```
 
-Their is some outliers values in the sightings distribution (@fig-sighting_descr). The cassowary is a solitary and difficult animal to observe due to its statute of vulnerable specie and its elusive behavior (Moore, 2007). It is aberrant to find values above 100 individuals in a 1km grid because in average there is less than 3 individuals/km² and the population was estimate to fewer than 1500 birds in 2012 (Moore, 2007; Romagnano *et* al., 2012). In the breeding season a female may leave approximation 4 eggs per clutch to the male, and once the ovulation period is over and the egg hatch, adults can kill each other (Romagnano *et* al., 2012). With this information, we decide to remove sightings above 10 because data could be collecting during the breeding period.
+Their is some outliers values in the sightings distribution (@fig-sighting_descr).
 
 ## Environmental variables
 
@@ -163,7 +165,7 @@ Tod do : Description of the distribution:
 #| label: fig-1rstcarto_cells
 #| fig-cap: "First view of grid-cells distribution"
 
-plot(cassowary_filtr[,2:3])
+plot(cassowary[,2:3])
 ```
 
 The points are distributed continuously, even if some locations are missing (@fig-1rstcarto_cells).
@@ -199,7 +201,7 @@ mapview(cassow_sf %>% filter(abs == "abs"),
           map.types = c("OpenStreetMap.DE"))
 ```
 
-This map shows that cassowary sightings tend to be more common in the ..... (@fig-carto_pabs)
+This map shows that cassowary sightings tend to be more common in the rainforest part (@fig-carto_pabs).
 
 ```{r}
 #| label: fig-carto_collision
@@ -215,6 +217,8 @@ mapview(cassow_sf %>% filter(morta == "pas_morta"),
 ```
 
 ------------------------------------------------------------------------
+
+The mortality strike occur on the road near the rainforest and where cassowaries appear to be abundant.
 
 # Statistical Analysis
 
@@ -270,7 +274,7 @@ These types of graphs are usually typical of a **periodic phenomenon**, also kno
 
 This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
 
-**b.) With modification of the data** :
+**b.) With modification of the data** : I don't think we'll keep it..
 
 Let's first try with the *Sightings* data. Maybe, remove the variables *Residential.01* and *Fruit.01* because of redundant information with the variables *Residential.P* and *Fruit.P* ? Transform the variables *Residential.01* and *Fruit.01* into qualitative ones ?
 
