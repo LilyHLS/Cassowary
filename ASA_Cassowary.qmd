@@ -444,3 +444,6 @@ ggplot(gwr_signif_all,
   theme_minimal() +
   ggtitle("Cartes locales des coefficients GWR (Poisson ou NegBin)")
 ```
+
+## Zeroinflated variable 
+
