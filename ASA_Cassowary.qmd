@@ -260,7 +260,7 @@ We can see that 95% of the distance are under 25 000, 30 000 (m ?).
 
 ```{r semivar}
 #| label: fig-semivario
-#| fig-cap: "Empirical semi variogram for sightings of cassowary and environmental variables"
+#| fig-cap: "Empirical semi variogram for sightings of cassowary"
 
 semivar_sight <- variog(geo_sight, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_rain <- variog(geo_rainp, option = "bin", max.dist = 30000, messages = FALSE)
@@ -270,17 +270,25 @@ semivar_residp <- variog(geo_residp, option = "bin", max.dist = 30000, messages 
 semivar_fruitp <- variog(geo_fruitp, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_otherp <- variog(geo_otherp, option = "bin", max.dist = 30000, messages = FALSE)
 
-par(mfrow = c(4, 2))
+par(mfrow = c(2, 2))
 plot(semivar_sight, main = "Sightings of cassowary")
+```
+
+
+```{r semivar}
+#| label: fig-semivario2
+#| fig-cap: "Empirical semi variogram for environmental variables"
+
 plot(semivar_rain, main = "Proportion of rainforest")
 plot(semivar_residb, main = "Presence/absence of residential area")
 plot(semivar_fruitb, main = "Presence/absence of fruit crop")
+
 plot(semivar_residp, main = "Proportion of residential area")
 plot(semivar_fruitp, main = "Proportion of fruit crop")
 plot(semivar_otherp, main = "Proportion of other")
 ```
 
-As we can see on all the plots of @fig-semivario, except maybe for the semi variogram for presence/absence of residential area, **the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (km?)** because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
+As we can see on all the plots of @fig-semivario2, except maybe for the semi variogram for presence/absence of residential area, **the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (km?)** because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
 
 As we can see on all the plots, except maybe for the semi variogram for presence/absence of residential area, the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (m?) because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
 
