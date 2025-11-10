@@ -14,9 +14,9 @@ fig.align: 'center'
 
 ![](images/cassowary.jpg){width="672"}
 
-The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered status and elusive behavior (Moore, 2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (Moore, 2007). This bird occur in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (Moore, 2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (Westcott, 1999). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds over long distance (Westcott, 1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services 2001).
+The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered status and elusive behavior (Moore, 2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (Moore, 2007). This bird occur in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (Moore, 2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (Westcott, 1999). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds over long distance (Westcott, 1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services, 2001).
 
-It is essential to estimate the factors that may impact the abundance of southern cassowary population in order to ensure its conservation. In 2026, Dwyer et *al*. used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 on a 1 km² grid-cells covering the study area.\
+It is essential to estimate the factors that may impact the abundance of southern cassowary population in order to ensure its conservation. In 2016, Dwyer et *al*. used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 on a 1 km² grid-cells covering the study area.\
 Using this data, compiled with the habitat variables and the distance of road location of each grid-cells (@tbl-descrva) by Dwyer et *al.* (2016), we aim to determine **which factors influence the southern cassowary abundance. And whether there are implications for strike mortality management.**
 
 ![](images/fig1_study_area.png){width="669"}
@@ -47,7 +47,7 @@ It is highly likely that there is spatial correlation between the different cell
 *Hypothesis: We assume that southern cassowary is mainly distributed near its natural habitat or in areas where food is available. We expect that high proportions of rainforest and fruits are associated with greatest cassowary abundance. We also assume that traffic strike occur when the road is at a low distance from the centroid of the grid cell and that risk is higher when the road connects two favorable habitat.*
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE, cash=TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE, cash = TRUE)
 ```
 
 **R Libraries**
@@ -62,7 +62,7 @@ library(MASS)
 # Spatial analysis 
 library(geoR) #for spatial object to perform geostatistic
 library(sp)
-library(sf)
+library(sf) #deal with spatial data
 library(pgirmess) #for spatial correlogram
 library(spdep) #to extracted the neighbors is a spatial data
 library(ade4) #used for plotting spatial data
@@ -70,8 +70,8 @@ library(spatialreg) #used for spatial data modelling
 library(spgwr) #to run geographically weighted regression
 library(dplyr)
 library(mapview) # maps with openstreetMa
-library(mapview)
 library(GWmodel)
+library(corrplot) #correlation plot
 ```
 
 # Data exploration
@@ -158,6 +158,16 @@ for(i in 1:ncol(env)){
 Tod do : Description of the distribution:
 
 ### Correlation between environmental variables
+```{r}
+#| label: fig-corrplot
+#| fig-cap : "Correlation between environmental variables"
+corelation <- cor(env)
+corrplot(corelation, type = "upper", method = "number")
+```
+
+This @fig-corrplot shows a negative correlation between the proportions of different habitats per cell (notably -0.82 between the proportion of rainforest *Rainforest.P* and that of other habitats *Other.P*). This result was expected since the habitat proportion variables per cell are constructed together.
+
+There is also a positive correlation between the data on the presence/absence of fruit crops *Fruit.01* and the proportion of fruit crops within the grid *Fruit.P* (as well as for the presence/absence of residential areas *Residential.01* and the proportion of residential areas within the grid *Residential.P*). This result is also expected because these variables highlight similar information. It will therefore be necessary in the subsequent analysis to choose which environmental variables to select in order to avoid them being too correlated
 
 ## Spatial data : cartography
 
@@ -215,29 +225,28 @@ mapview(cassow_sf %>% filter(morta == "pas_morta"),
           zcol = "Strikes", layer.name = "Number of traffic strikes recorded", 
           map.types = c("OpenStreetMap.DE"))
 ```
+The mortality strike occur on the road near the rainforest and where cassowaries appear to be abundant.
 
 ------------------------------------------------------------------------
-
-The mortality strike occur on the road near the rainforest and where cassowaries appear to be abundant.
 
 # Statistical Analysis
 
 ## Spatial dependency
 
-**1.) Investigation of spatial dependency with the semi variogram :**
+### Investigation of spatial dependency with the semi variogram
 
 **a.) Without any modification of the data :**
 
 First, we have to investigate if there is spatial dependency in the variables and because this is a continuous process, we are going to visualize the semi variograms. For this first model, related to the first problematic **"Which factors influence the southern cassowary abundance?"** we do not take into account *Strikes* and the variables linked to the road (*Total_Road, Dresid and Dfruit*).
 
 ```{r}
-geo_sight=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Sightings)))
-geo_residb=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.01)))
-geo_fruitb=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.01)))
-geo_rainp=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Rainforest.P)))
-geo_residp=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.P)))
-geo_fruitp=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.P)))
-geo_otherp=as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Other.P)))
+geo_sight <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Sightings)))
+geo_residb <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.01)))
+geo_fruitb <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.01)))
+geo_rainp <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Rainforest.P)))
+geo_residp <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.P)))
+geo_fruitp <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.P)))
+geo_otherp <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Other.P)))
 ```
 
 In order to plot the semi variance plot (semivariogram) for the variables, especially the responde variable, we need to look at the distribution of distance between points.
@@ -249,6 +258,9 @@ hist(dist(cassowary[,2:3]))
 We can see that 95% of the distance are under 25 000, 30 000 (m ?).
 
 ```{r semivar}
+#| label : fig-semivario
+#| fig-cap : "Empirical semi variogram for sightings of cassowary and environmental variables"
+
 semivar_sight <- variog(geo_sight, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_rain <- variog(geo_rainp, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_residb <- variog(geo_residb, option = "bin", max.dist = 30000, messages = FALSE)
@@ -257,16 +269,17 @@ semivar_residp <- variog(geo_residp, option = "bin", max.dist = 30000, messages 
 semivar_fruitp <- variog(geo_fruitp, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_otherp <- variog(geo_otherp, option = "bin", max.dist = 30000, messages = FALSE)
 
-plot(semivar_sight, main = "Empirical semi variogram for sightings of cassowary")
-plot(semivar_rain, main = "Empirical semi variogram for proportion of rainforest")
-plot(semivar_residb, main = "Empirical semi variogram for presence/absence of residential area")
-plot(semivar_fruitb, main = "Empirical semi variogram for presence/absence of fruit crop")
-plot(semivar_residp, main = "Empirical semi variogram for proportion of residential area")
-plot(semivar_fruitp, main = "Empirical semi variogram for proportion of fruit crop")
-plot(semivar_otherp, main = "Empirical semi variogram for proportion of other")
+par(mfrow = c(4, 2))
+plot(semivar_sight, main = "Sightings of cassowary")
+plot(semivar_rain, main = "Proportion of rainforest")
+plot(semivar_residb, main = "Presence/absence of residential area")
+plot(semivar_fruitb, main = "Presence/absence of fruit crop")
+plot(semivar_residp, main = "Proportion of residential area")
+plot(semivar_fruitp, main = "Proportion of fruit crop")
+plot(semivar_otherp, main = "Proportion of other")
 ```
 
-As we can see on all the plots, except maybe for the semi variogram for presence/absence of residential area, **the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (km?)** because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
+As we can see on all the plots of @fig-semivario, except maybe for the semi variogram for presence/absence of residential area, **the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (km?)** because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
 
 As we can see on all the plots, except maybe for the semi variogram for presence/absence of residential area, the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 (m?) because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi variogram for proportion of fruit crop, we can even see 2 maxima.
 
@@ -337,14 +350,15 @@ sum(E1^2) / (N - p)
 No more overdispersion.
 
 ```{r}
-geo_resid <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(E1)))
+geo_resid <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
+                                               data.frame(E1)))
 semivar_resid <- variog(geo_resid, option = "bin", max.dist = 30000)
 plot(semivar_resid, main = "Semi-variogramme des résidus NB")
 ```
 
 We still have an abnormal semi variogram ???
 
-**2.) Geostatistical model** :
+### Geostatistical model
 
 We are now interested in the relationship that could occur between *Sightings* and the explanatory variables, taking into account the spatial effect.
 
@@ -353,16 +367,16 @@ We are now interested in the relationship that could occur between *Sightings* a
 Usually, at first, we decide to fit a simple linear regression model to the data. However, here we already know this is not the best model to consider at first, especially because of the counting data we have for our response variable.
 
 ```{r}
-glm_NB<-glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P, data=cassowary)
+glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P, data = cassowary)
 summary(glm_NB)
 ```
 
-Test for the autocorrelation in the residuals :
+Test for the autocorrelation in the residuals with Moran Test :
 
 ```{r}
-#or Dharma procedure based on a Moran test
-testSpatialAutocorrelation(simulateResiduals(glm_NB),x=cassowary$latitude,y=cassowary$longitude)
-testSpatialAutocorrelation(simulationOutput, x, y)
+# Dharma procedure :
+testSpatialAutocorrelation(simulateResiduals(glm_NB), 
+                           x = cassowary$latitude, y = cassowary$longitude)
 ```
 
 For each point, we have a local Moran index. The distance based autocorrelation of the residuals is highly significative (p-value \< 2.2e-16). In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between *Sightings* and the explanatory variables.
@@ -372,9 +386,12 @@ For each point, we have a local Moran index. The distance based autocorrelation 
 We define the SpatialPointsDataFrame with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(x+1) transformation on the response variable and the ***gwr*** function for general linear models.
 
 ```{r}
-geocass=SpatialPointsDataFrame(data.frame(cassowary[,2:3]), data.frame(cassowary[,c("Rainforest.P","Residential.P","Other.P","Fruit.P", "Sightings")]))
-gwr.bw=gwr.sel(log(Sightings+1) ~ Rainforest.P + Residential.P + Other.P + Fruit.P,data=geocass,adapt=FALSE)
-lmgwrD=gwr(log(Sightings+1) ~ Rainforest.P + Residential.P + Other.P + Fruit.P,data=geocass,bandwidth = gwr.bw, se.fit=T,hatmatrix=T)
+geocass <- SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
+                                  data.frame(cassowary[,c("Rainforest.P","Residential.P","Other.P","Fruit.P", "Sightings")]))
+gwr.bw <- gwr.sel(log(Sightings+1) ~ Rainforest.P + Residential.P + Other.P + Fruit.P,
+                  data = geocass, adapt = FALSE)
+lmgwrD <- gwr(log(Sightings+1) ~ Rainforest.P + Residential.P + Other.P + Fruit.P,
+              data = geocass, bandwidth = gwr.bw, se.fit = T, hatmatrix = T)
 summary(lmgwrD)
 ```
 
@@ -387,9 +404,9 @@ names(lmgwrD$SDF)
 Since it is a spatial object we can map the coefficient and their significativity. Significativity of coefficient is not automatically computed by R, but, we can use the coefficient and their standard error to get a t-statistic. Under the null hypothesis, the t ratio follows a t distribution, and hence one can calculate the probability. To do this, first get the degrees of freedom from the gwr results object. For instance, we can test the significativity
 
 ```{r}
-dfree=lmgwrD$results$edf
+dfree <- lmgwrD$results$edf
 
-vars <-c("Rainforest.P", "Residential.P", "Other.P", "Fruit.P")
+vars <- c("Rainforest.P", "Residential.P", "Other.P", "Fruit.P")
 
 gwr_signif_all <- lapply(vars, function(v) {
   
@@ -420,8 +437,10 @@ gwr_signif_all <- lapply(vars, function(v) {
     classe_p = classe_p
   )
 }) %>% bind_rows()
+```
 
 
+```{r}
 #Pour visualiser une variable à la fois
 ggplot(
   gwr_signif_all %>% filter(variable == "Rainforest.P"),
@@ -433,7 +452,10 @@ ggplot(
   scale_size_continuous(range = c(1, 8)) +
   theme_minimal() +
   ggtitle("GWR local coefficients for Rainforest.P")
+```
 
+
+```{r}
 #pour tous visualiser : 
 ggplot(gwr_signif_all,
        aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
