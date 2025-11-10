@@ -258,8 +258,8 @@ hist(dist(cassowary[,2:3]))
 We can see that 95% of the distance are under 25 000, 30 000 (m ?).
 
 ```{r semivar}
-#| label : fig-semivario
-#| fig-cap : "Empirical semi variogram for sightings of cassowary and environmental variables"
+#| label: fig-semivario
+#| fig-cap: "Empirical semi variogram for sightings of cassowary and environmental variables"
 
 semivar_sight <- variog(geo_sight, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_rain <- variog(geo_rainp, option = "bin", max.dist = 30000, messages = FALSE)
@@ -298,16 +298,20 @@ glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P +
 ```
 
 Overdispersion check (scale parameter calculation) :
-
+*Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
 ```{r}
 E1 <- resid(glm_pois, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
 p  <- length(coef(glm_pois))
 sum(E1^2) / (N - p)
+
+simout <- simulateResiduals(fittedModel = glm_pois, plot = F)
+plot(simout)
 ```
 
-Here, the Pearson residuals are way above 1, so there is overdispersion which can be due to outliers, missing interactions and zero inflation.
+Here, the Pearson residuals are way above 1, so there is overdispersion which can be due to outliers, model misfit, missing interactions and zero-inflation.
 
+So we first try to change the model distribution to negative binomial : 
 ```{r}
 glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + 
                    Residential.01 + Fruit.01, 
@@ -339,15 +343,23 @@ drop1(glm_NB, test = "Chi")
 ```
 
 Here, there is the final model with only significant effects. Again, we check for overdispersion :
-
 ```{r}
 E1 <- resid(glm_NB, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
 p  <- length(coef(glm_NB))
 sum(E1^2) / (N - p)
+
+simout <- simulateResiduals(fittedModel = glm_NB, plot = F)
+plot(simout)
 ```
 
-No more overdispersion.
+No more overdispersion : the negative binomial distribution seems appropriate in this case. If this had not been the case, we would have considered other distributions, such as the one that include zero-inflation (i.e. a situation when more zeros appear in the observation than expected under the fitted model).
+
+Just in case, we can check out zeroinflation : 
+```{r}
+testZeroInflation(simout)
+```
+No need to zero-inflation to the model. 
 
 ```{r}
 geo_resid <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
@@ -371,8 +383,7 @@ glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P, data = cass
 summary(glm_NB)
 ```
 
-Test for the autocorrelation in the residuals with Moran Test :
-
+Test for the spatial autocorrelation in the residuals with Moran Test :
 ```{r}
 # Dharma procedure :
 testSpatialAutocorrelation(simulateResiduals(glm_NB), 
@@ -383,7 +394,7 @@ For each point, we have a local Moran index. The distance based autocorrelation 
 
 **b.) GWR because of the non-stationarity** :
 
-We define the SpatialPointsDataFrame with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(x+1) transformation on the response variable and the ***gwr*** function for general linear models.
+We define the *SpatialPointsDataFrame* with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(x+1) transformation on the response variable and the ***gwr*** function for general linear models.
 
 ```{r}
 geocass <- SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
@@ -442,15 +453,13 @@ gwr_signif_all <- lapply(vars, function(v) {
 
 ```{r}
 #Pour visualiser une variable à la fois
-ggplot(
-  gwr_signif_all %>% filter(variable == "Rainforest.P"),
-  aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)
-) +
+ggplot(gwr_signif_all %>% filter(variable == "Rainforest.P"),
+  aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
   geom_point() +
   scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
   scale_shape_manual(values = c("positive" = 16, "negative" = 17, "zero" = 15)) +
   scale_size_continuous(range = c(1, 8)) +
-  theme_minimal() +
+  theme_bw() +
   ggtitle("GWR local coefficients for Rainforest.P")
 ```
 
@@ -463,9 +472,9 @@ ggplot(gwr_signif_all,
   facet_wrap(~ variable, scales = "free") +
   scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
   scale_shape_manual(values = c("positive" = 16, "negative" = 17)) +
-  theme_minimal() +
+  theme_bw() +
   ggtitle("Cartes locales des coefficients GWR (Poisson ou NegBin)")
 ```
 
-## Zeroinflated variable 
+### Overdispersion check 
 
