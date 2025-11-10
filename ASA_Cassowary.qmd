@@ -228,9 +228,9 @@ mapview(cassow_sf %>% filter(morta == "pas_morta"),
 ```
 The mortality strike occur on the road near the rainforest and where cassowaries appear to be abundant.
 
-------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-# Statistical Analysis
+# Statistical Analysis : Abundance ~ environmental variables
 
 ## Spatial dependency
 
@@ -486,7 +486,12 @@ ggplot(gwr_signif_all,
 ```
 
 ### Overdispersion check 
+```{r}
+
+```
+
+# Statistical Analysis : Strikes ~ environmental variables
 
 # Study limitations
 However, our results should be treated with caution as they are based on citizen science data. 
-Furthermore, in the initial study (@dwyer_using_2016), each cassowary sighting is dated, allowing for temporal analyses that take sampling bias into account. 
+Furthermore, in the initial study (@dwyer_using_2016), each cassowary sighting ans striking is dated, allowing for temporal analyses that take sampling bias into account. 
