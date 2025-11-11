@@ -34,8 +34,8 @@ Using this data, compiled with the habitat variables and the distance of road lo
 | `Fruit.P` (quantitative continue) | proportion of fruit crop within the grid |
 | `Other.P` (quantitative continue) | proportion of other area within the grid |
 | `Total_Road` (quantitative continue) | length of road within the grid |
-| `Sightings` (semi-quantitative counting) | visual contact of cassowary |
-| `Strikes` (quantitative binary) | mortality of cassowary due to road traffic |
+| `Sightings` (quantitative counting) | visual contact of cassowary |
+| `Strikes` (quantitative counting) | mortality of cassowary due to road traffic |
 | `Residential.01` (quantitative binary) | presence /absence of residential area |
 | `Fruit.01` (quantitative binary) | presence /absence of fruit crop |
 | `Dresid` (quantitative continue) | distance of the road to residential area |
