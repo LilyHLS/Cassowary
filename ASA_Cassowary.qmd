@@ -19,20 +19,21 @@ fig.align: 'center'
 
 The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered status and elusive behavior (@moore_population_2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (@moore_population_2007). This bird occur in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (@moore_population_2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (@westcott_counting_1999, Campbell et *al.*, 2023). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds over long distance (@westcott_counting_1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services, 2001).
 
-It is essential to estimate the factors that may impact the abundance of southern cassowary population in order to ensure its conservation. In 2016, @dwyer_using_2016 used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 on a 1 km² grid-cells covering the study area.\
-Using this data, compiled with the habitat variables and the distance of road location of each grid-cells (@tbl-descrva) by @dwyer_using_2016, we aim to determine **which factors influence the southern cassowary abundance. And whether there are implications for strike mortality management.**
+It is essential to estimate the factors that may impact the abundance of southern cassowary population in order to ensure its conservation. In 2016, @dwyer_using_2016 used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 (20 years) on 1 km² grid-cells covering the study area.\
+Using this data, compiled with the habitat variables and the distance of road location of each grid-cells (@tbl-descrva) by @dwyer_using_2016, we aim to answer the following questions :
+**Which factors influence the southern cassowary abundance ? Is there any implication for strike mortality management ?**
 
 ![](images/fig1_study_area.png){width="669"}
 
-**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and wildlife traffic strikes occurring within geo-referenced 1 km grid cells.
+**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and traffic strikes that have occurred are geo-referenced in 1 km grid cells.
 
 ::: {#tbl-descrva}
 | Variable name | Ecological reference |
 |----|----|
-| `Rainforest.P` (quantitative continue) | proportion of rain forest within the grid |
+| `Rainforest.P` (quantitative continue) | proportion of rainforest within the grid |
 | `Residential.P` (quantitative continue) | proportion of residential area within the grid |
 | `Fruit.P` (quantitative continue) | proportion of fruit crop within the grid |
-| `Other.P` (quantitative continue) | proportion of other area within the grid |
+| `Other.P` (quantitative continue) | proportion of other area (pasture, wetland) within the grid |
 | `Total_Road` (quantitative continue) | length of road within the grid |
 | `Sightings` (quantitative counting) | visual contact of cassowary |
 | `Strikes` (quantitative counting) | mortality of cassowary due to road traffic |
@@ -44,10 +45,11 @@ Using this data, compiled with the habitat variables and the distance of road lo
 Table of the cassowary variables and their ecological meaning.
 :::
 
-To answer these questions, we will use (model)....\
-It is highly likely that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test spatial autocorrelation with .....
+To answer these questions, we will first formulate a model with Sightings as a response variable to determine which factors influence the species abundance and then analyse the results. Then, we will study another model with strikes as a response variable in order to identify the factors that influence the mortality of cassowary in the studied area and ways to limit it, thinking about a conservation approach.
 
-*Hypothesis: We assume that southern cassowary is mainly distributed near its natural habitat or in areas where food is available. We expect that high proportions of rainforest and fruits are associated with greatest cassowary abundance. We also assume that traffic strike occur when the road is at a low distance from the centroid of the grid cell and that risk is higher when the road connects two favorable habitat.*
+In this study, we have several variables linked to the environment as well as the latitude and longitude of each cell. Close cells may have similar environmental conditions and that may influence the count of cassowaries. Cassowaries can probably move from a cell to another cell nearby, this can also influence Sightings. There are repeated counts in some cells : they were carried out over several years and each year, several citizens came to count in the same patches. Therefore, it is possible that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test for spatial autocorrelation.
+
+*Hypothesis: We assume that southern cassowary is mainly distributed near its natural habitat or in areas where food is available. We expect that high proportions of rainforest and fruits are associated with greatest cassowary abundance. We also assume that traffic strike occur when the road is at a low distance from the centroid of the grid cell and that risk is higher when the road connects to favorable habitat.*
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE, cash = TRUE)
@@ -97,6 +99,8 @@ There is no NA values in our data set
 
 1.  **Distribution of the response variable** $Y$
 
+Here, we study the variable called Sightings, which is the result of counting Cassowaries seen in the patches in the studied area during 12 years.
+
 ```{r data response variable abundance}
 #| label: fig-sighting_descr
 #| fig-cap: "Distribution of the response variable : Cassowary sightings"
@@ -109,7 +113,7 @@ par(mfrow = c(2, 2),
     col.main = "gray20",
     cex.axis = 0.9,
     cex.lab = 1) 
-col_transp <- adjustcolor("aquamarine3", alpha.f=0.5) 
+col_transp <- adjustcolor("blue4", alpha.f=0.5) 
 
 # Boxplot ----------------------------------------------------------------------
 boxplot(cassowary$Sightings,
@@ -138,9 +142,14 @@ qqnorm(cassowary$Sightings, pch=16, col=col_transp, xlab='', ylab='',main="QQ pl
 qqline(cassowary$Sightings, col='red', lwd=2)
 ```
 
-Their is some outliers values in the sightings distribution (@fig-sighting_descr).
+Their are some outliers in the distribution of Y (@fig-sighting_descr).
 
-Detail for the taking to 10/20 individuals
+Beaucoup de 0, la plupart des valeurs entre 0 et 100
+faire le summary et le comptage des valeurs à 0
+outliers : comptages
+biblio à intégrer
+
+
 
 2.  **Distribution of environmental variables** $X$
 
