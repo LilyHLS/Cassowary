@@ -6,16 +6,7 @@ output: html_document
 ### main question : Which factors influence the southern cassowary abundance?
 
 Valeurs très élevées par rapport aux densités naturelles (≤3/km²)
-Lorsque l'on a par exemple 100, 200 ou encore 500 casoars : ce n'est pas un comptage réel de ces casoars au km^2, mais des casoars vus plusieurs fois par plusieurs personnes au même endroit (ça peut être le même individu ou un différent, âges différents : pas de marquage-recapture) : ce n'est pas une abondance biologique.
-
-Ecrétage des données :
-10 : maximum plausible de casoars réellements distincts dans un km^2 (+ biblio et mail)
-20 : permet de pas trop lisser les infos mais vis à vis de la biblio ??
-
-Garder les valeurs telles que : peut biaiser l'autocorrélation
-
-
-Exploration des données : 
+Lorsque l'on a par exemple 100, 200 ou encore 500 casoars : ce n'est pas un comptage réel de ces casoars au km^2, mais des casoars vus plusieurs fois par plusieurs personnes au même endroit (ça peut être le même individu ou un différent, âges différents : pas de marquage-recapture)
 
 ```{r}
 library(ggplot2)
@@ -23,26 +14,10 @@ library(corrplot)
 ```
 
 ```{r}
-#library(readxl)
-#data_cassowary <- read_excel("data_cassowary.xlsx")
 data_cassowary <- read.table("data_cassowary.txt", h = T)
 summary(data_cassowary)
 View(data_cassowary)
 str(data_cassowary)
-```
-
-```{r conversion}
-
-#conversion en numérique des variables en chaîne de caractères (pour le excel)
-#data_cassowary$Rainforest.P <- as.numeric(data_cassowary$Rainforest.P)
-#data_cassowary$Residential.P <- as.numeric(data_cassowary$Residential.P)
-#data_cassowary$Fruit.P <- as.numeric(data_cassowary$Fruit.P)
-#data_cassowary$Other.P <- as.numeric(data_cassowary$Other.P)
-#data_cassowary$Total_Road <- as.numeric(data_cassowary$Total_Road)
-#data_cassowary$Dresid <-as.numeric(data_cassowary$Dresid)
-#data_cassowary$Dfruit <-as.numeric(data_cassowary$Dfruit)
-
-#str(data_cassowary)
 ```
 
 
@@ -50,7 +25,7 @@ str(data_cassowary)
 #vérification des valeurs NA
 colSums(is.na(data_cassowary))
 ```
-No NA values on thhe dataset
+No NA values on the dataset
 
 #Etude de la variable $Y$ Sightings et distribution des valeurs de $Y$ (Sightings)
 
@@ -77,31 +52,13 @@ Several outliers
 Hypotheses : 
 - plusieurs casoars comptés en rapproché, surcomptages et doublons à certains endroits où le ou les casoars présents sont montrés plusieurs fois 
 
-#borner/écrétage 
+#borner/écrétage ?
 ```{r}
-data_cassowary$Sightings <- pmin(data_cassowary$Sightings, 10) #bornage à 10
-#data_cassowary$Sightings <- pmin(data_cassowary$Sightings, 20) #bornage à 20 : toutes les valeurs de Sightings supérieures à 20 sont ramenées à 20
+data_cassowary$Sightings <- pmin(data_cassowary$Sightings, 100) #bornage à 100
 table(data_cassowary$Sightings)
 summary(data_cassowary$Sightings)
 ```
 
-Borner à 10 :
-par rapport à la biblio, souvent moins de 3 individus/km^2
-ici on est sur des patchs d'un km^2 
-bcp de doublons, surcomptage de certains individus
-
-Borner à 20 : peut-être moins strict que 10 niveau écrétage 
-
-#on refait l'exploration du Y Sightings avec écrétage 
-```{r}
-par(mfrow=c(2,2))
-# Boxplot
-boxplot(data_cassowary$Sightings,col='dodgerblue3',ylab='Visual contact of cassowary')
-# Cleveland plot
-dotchart(data_cassowary$Sightings,pch=16,col='dodgerblue3',xlab='Visual contact of cassowary')
-# Histogram
-hist(data_cassowary$Sightings, breaks=10, col='dodgerblue3',xlab="Visual contact of cassowary",main="Comptages")
-```
 #étude de Y mortalité sans tranformation
 
 ```{r}
@@ -316,15 +273,7 @@ boxplot(data_cassowary$Fruit.P~data_cassowary$Residential.01,varwidth = TRUE, yl
 ```
 Forcément : proportion de cultures fruitières corrélées à la présence ou absence de fruits, idem pour aire résidentielle
 
-
 #Interactions potentielles entre les variables (en cours)
-
-#Modèle
-
-la réponse étant un comptage/abondance : nombre de casoars 
-GLM Poisson. 
-Si on constate un problème de surdispersion à l'issue de cette modélisation : GLM Binomiale Négative.
-
 
 
 
