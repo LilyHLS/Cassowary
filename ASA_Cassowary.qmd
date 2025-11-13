@@ -673,12 +673,16 @@ Their is some outliers values in the strike distribution (@fig-stikes_descr). Mo
 
 2.  **Distribution of explanatory variables** $X$
 
+```{r log+1 transformation }
+cassowary$LogSightings<-log(cassowary$Sightings +1)
+```
+
 ```{r X road variables, fig.show = "hold"}
 #| label: fig-distribmort
 #| fig-cap: "Distribution of strikes explain variables"
 
 road <- cassowary %>%
-  dplyr::select(Total_Road, Dresid, Dfruit, Sightings)
+  dplyr::select(Total_Road, Dresid, Dfruit, Sightings, LogSightings)
 
 par(mfrow = c(2, 2))
 for(i in 1:ncol(road)){
@@ -690,7 +694,7 @@ for(i in 1:ncol(road)){
 }
 ```
 
-We want to test which variables influence road mortality. To to this, we keep the total proportion of roads in the grid cell, but also the distance between the roads and fruit crops as well as the distance between the roads and residential area. As cassowaries have a territory of about 1km² we assume that their chances to encountering a road are high if they live close to one. We can add `Sightings` to check if mortality strike is influenced by density of Cassowary. If we use `Sightings`, we can do a log-transformation because there are outliers in the distribution of `Sightings`.
+We want to test which variables influence road mortality. To to this, we keep the total proportion of roads in the grid cell, but also the distance between the roads and fruit crops as well as the distance between the roads and residential area. As cassowaries have a territory of about 1km² we assume that their chances to encountering a road are high if they live close to one. We can add `Sightings` to check if mortality strike is influenced by density of Cassowary. If we use `Sightings`, we can do a log+1 transformation because there are outliers in the distribution of `Sightings`.
 
 3.  **Correlation between explanatory variables** $X$
 
@@ -701,17 +705,52 @@ corelation <- cor(road)
 corrplot(corelation, type = "upper", method = "number")
 ```
 
-There is no correlation between the $X$ variables.
+There is no correlation between the $X$ variables expect for `Sighting` and `LogSighting`, but we will just keep the log+1 transformation.
 
 ### Statistical Analysis
 
 As for the first model, in the problematic **"Are there implications for strike mortality management?"** , we begin first with a glm model. If the model is overffited, which may be due to zero inflation we change for a NB model. We then investigate the spatial autocorrelation for an noncontinuous grid.
+
+In this model, the `Sightings` variable is transform with the log+1 transformation `LogSightings`.
+
+comment scale
+
+```{r glm pois strikes pois}
+glm_pois_strikes <- glm(Strikes ~ scale(Total_Road) + scale(Dresid) + scale(Dfruit) + LogSightings,
+                data = cassowary, 
+                family = poisson(link="log"))
+summary(glm_pois_strikes)
+```
+
+```{r glm strikes res}
+simresstrikes <- simulateResiduals(fittedModel = glm_pois_strikes, plot = F)
+testDispersion(simresstrikes)
+plot(simulateResiduals(glm_pois_strikes))
+testZeroInflation(simresstrikes)
+```
+
+Residuals are overfitted but their is no issue of 0 inflated. As for the previous problematic, we switch to a NB distribution for this model.
+
+```{r glm quasi-pois strikes pois}
+glm_nb_strikes <- glm.nb(Strikes ~ scale(Total_Road) + scale(Dresid) + scale(Dfrui) + LogSightings,data = cassowary)
+summary(glm_nb_strikes)
+```
+
+```{r glm.nb strikes res}
+simresstrikes <- simulateResiduals(fittedModel = glm_nb_strikes, plot = F)
+testDispersion(simresstrikes)
+plot(simulateResiduals(glm_nb_strikes))
+testZeroInflation(simresstrikes)
+```
+
+With the Negative Binomial distribution the assumption of the residuals are respected. Residuals are not anymore overfitted.
 
 ```{r geo ref strikes}
 geo_strikes <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Strikes)))
 geo_troad <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Total_Road)))
 geo_dresid <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Dresid)))
 geo_dfruit <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Dfruit)))
+geo_logsightings <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$LogSightings)))
 ```
 
 ```{r semivar strikes}
@@ -731,21 +770,6 @@ plot(semivar_dfruit, main = "Distance of fruit crops to road")
 ```
 
 It seems that their is no spatial dependency for variables `Total_Road` and `Dfruit`. However, the `Dresid` variable look like stationary until 30km, or with cluster?. Finally, the number of mortality strikes decrease around 13km.
-
-```{r glm pois strikes pois}
-glm_pois_strikes <- glm(Strikes ~ Total_Road + Dresid + Dfruit,
-                data = cassowary, 
-                family = poisson)
-summary(glm_pois_strikes)
-```
-
-```{r glm strikes res}
-testDispersion(glm_pois_strikes)
-plot(simulateResiduals(glm_pois_strikes))
-testZeroInflation(glm_pois_strikes)
-```
-
-Residuals are overfitting, probably cause to 0 inflation or outliers in the Poisson distribution of our $Y$ variable. As we did for the first question, we will switch to a Negative Binomial model. To test the 0 inflation we also apply the function implemented in DHARMa package and the result of the test is significant.
 
 ```{r glm strikes nb}
 glm_NB_strikes <- glm.nb(Strikes ~ Total_Road + Dresid + Dfruit, 
