@@ -77,13 +77,11 @@ We note that `Sightings` doesn't represent actual abundances of Cassowaries, but
 
 In this study, we have several variables linked to the environment as well as the latitude and longitude of each cell (@descrva). Close cells may have similar environmental conditions and that may influence the count of cassowaries. Cassowaries can probably move from a cell to another cell nearby, this can also influence `Sightings`. There are repeated counts in some cells : they were carried out over several years and each year, several citizens came to count in the same patches. Therefore, it is possible that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test for spatial autocorrelation.
 
-
 **Hypothesis:** *We assume that southern cassowary is mainly distributed near its natural habitat (Rainforest) or in areas where food is available (Fruit crop). We expect that high proportions of rainforest and fruit crops are associated with greatest cassowary abundance.*\
 *We also assume that traffic strike occur when (the road is at a low distance from the centroid of the grid cell) and that risk is higher when the road connects to favorable habitat.*
 
-**Hypothesis:** *We assume that southern cassowary is mainly distributed near its natural habitat (Rainforest) or in areas where food is available (Fruit crop). We expect that high proportions of rainforest and fruit crops are associated with greatest cassowary abundance.*     
+**Hypothesis:** *We assume that southern cassowary is mainly distributed near its natural habitat (Rainforest) or in areas where food is available (Fruit crop). We expect that high proportions of rainforest and fruit crops are associated with greatest cassowary abundance.*\
 *We also assume that traffic strike is higher when the road connects to favorable habitat, with a low distance between fruit crops and road.*
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message = FALSE, cash = TRUE)
@@ -193,7 +191,7 @@ The data will be discussed because an overcounting by citizens can be possible. 
 
 #### Distribution of environmental variables $X$ {.unnumbered}
 
-We assume that the environmental variables that can influence cassowary abundance are the abundance of a certain type of habitat and the presence/absence of these habitats in cells where cassowaries are counted. We also test if there is a correlation with distances. 
+We assume that the environmental variables that can influence cassowary abundance are the abundance of a certain type of habitat and the presence/absence of these habitats in cells where cassowaries are counted. We also test if there is a correlation with distances.
 
 -   **Description of quantitative continue variables :**
 
@@ -222,7 +220,6 @@ for(i in 1:ncol(env)){
 
 We can note presence of outliers in some covariates (`Residential.P` and `Total_Road`) with high dispersion. Next, we must be careful that this does not skew the model results. If this is the case, we could try a log transformation of these covariates.
 
-
 -   **Description of quantitative binary variables : Fruit.01 and Residential.01**
 
 ```{r}
@@ -239,12 +236,9 @@ There is a good balance between presence and absence for each variable. However,
 
 #### Potential relationships between response variable (Sightings) and explanatory variables
 
-
-- **Potential relationships between response variable (Sightings) and quantitative variables :** 
- 
+-   **Potential relationships between response variable (Sightings) and quantitative variables :**
 
 ### Potential relationships between response variable (Sightings) and explanatory variables
-
 
 ```{r}
 par(mfrow=c(2, 2))
@@ -288,7 +282,8 @@ plot(cassowary$Sightings ~ cassowary$Dresid, pch = 16,
 
 
 ```
--   **Potential relationships between response variable (Sightings) and qualitative variables :** 
+
+-   **Potential relationships between response variable (Sightings) and qualitative variables :**
 
 ```{r}
 par(mfrow = c(2, 1))
@@ -304,11 +299,7 @@ boxplot(cassowary$Sightings ~ cassowary$Fruit.01, pch = 16,
 
 ```
 
-Using graphs, it seems difficult to see relations between $Y$ and $Xs$. One explanation is that there are a lot of zeros in `Sightings`. 
-Nevertheless, we observe that more cassowary individuals are observed when `Rainforest.P` is higher. The opposite relation is observed between Y and `Other.P`. 
-`Other.P` and `Rainforest.P` could be correlated : we check correlation between $Xs$ in the following section.
-Regarding `Fruit.P`, it seems that cassowaries are more counted when the proportion of fruit crop is lower but when this proportion is higher, the counts are superior to 0 individuals.
-We also checked the relation between `Dresid` and `Sightings`, and the relation between `Dfruit` and `Sightings` : no obvious relations appear on graphs but ecologically, we think that `Sightings` is not influenced by `Dfruit` and `Dresid`. We won't test theses two relations. 
+Using graphs, it seems difficult to see relations between $Y$ and $Xs$. One explanation is that there are a lot of zeros in `Sightings`. Nevertheless, we observe that more cassowary individuals are observed when `Rainforest.P` is higher. The opposite relation is observed between Y and `Other.P`. `Other.P` and `Rainforest.P` could be correlated : we check correlation between $Xs$ in the following section. Regarding `Fruit.P`, it seems that cassowaries are more counted when the proportion of fruit crop is lower but when this proportion is higher, the counts are superior to 0 individuals. We also checked the relation between `Dresid` and `Sightings`, and the relation between `Dfruit` and `Sightings` : no obvious relations appear on graphs but ecologically, we think that `Sightings` is not influenced by `Dfruit` and `Dresid`. We won't test theses two relations.
 
 ### Correlation between environmental variables $X$
 
@@ -321,12 +312,7 @@ correlation <- cor(env)
 corrplot(correlation, type = "upper", method = "number")
 ```
 
-
-
-This @fig-corrplot shows a negative correlation (-0.82) between the proportion of rainforest `Rainforest.P` and that of other habitats `Other.P`. This result was expected since the habitat proportion variables per cell are constructed together.
-For the analysis, we will keep `Rainforest.P` : if it influences cassowary abundance, it can be linked directly to the literature.
-
-
+This @fig-corrplot shows a negative correlation (-0.82) between the proportion of rainforest `Rainforest.P` and that of other habitats `Other.P`. This result was expected since the habitat proportion variables per cell are constructed together. For the analysis, we will keep `Rainforest.P` : if it influences cassowary abundance, it can be linked directly to the literature.
 
 This @fig-corrplot shows a negative correlation between the proportions of different habitats per cell (notably -0.82 between the proportion of rainforest `Rainforest.P` and that of other habitats `Other.P`). This result was expected since the habitat proportion variables per cell are constructed together. We also have strong correlations between variables made from the same information : i.e `Residential.01` (presence /absence of residential area),`Residential.P` (proportion of residential area in the grid), and `Dresid` (distance of the road to residential area), or `Fruit.P`, `Fruit.01` and `Dfruit`.
 
@@ -660,19 +646,15 @@ If this ratio is greater than 1, then there is overdispersion. It is based on lo
 
 To account for the overdispersion of the residuals, we switch to a **negative binomial model**, with a log link.
 
-
-It allows us to assess whether the actual variance of the observations is close to the theoretical variance :
-$ \phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}$   
+It allows us to assess whether the actual variance of the observations is close to the theoretical variance : \$ \phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}\$\
 If this ratio is greater than 1, then there is overdispersion. It is based on log-likelihood and is less sensitive to extreme observation.
-
-
 
 ```{r}
 #based on the results of glm_pois1
 8257.2/249
 ```
 
-There is overdispersion.   
+There is overdispersion.
 
 Here, there is overdispersion.
 
@@ -711,7 +693,8 @@ summary(glm_NB)
 
 Here, the ratio \< 1 : there is no overdispersion.
 
--   Residus de Pearson : 
+-   Residus de Pearson :
+
 ```{r}
 E1 <- resid(glm_NB, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
@@ -719,11 +702,9 @@ p  <- length(coef(glm_NB))
 sum(E1^2) / (N - p)
 ```
 
-
--   DHarma package : 
+-   DHarma package :
 
 Dharma test :
-
 
 ```{r}
 simout_NB <- simulateResiduals(fittedModel = glm_NB, plot = F)
@@ -733,7 +714,7 @@ testZeroInflation(simout_NB)
 
 No more overdispersion : the negative binomial distribution seems appropriate in this case. If this had not been the case, we would have considered other distributions, such as the one that include zero-inflation (i.e. a situation when more zeros appear in the observation than expected under the fitted model).
 
-Write the results of model 
+Write the results of model
 
 ```{r}
 geo_resid <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
@@ -759,18 +740,15 @@ testSpatialAutocorrelation(simulateResiduals(glm_NB),
 For each point, we have a local Moran index.\
 Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. We have significant positive autocorrelation (p-value \< 2.2e-16) : this means that two observations that are close together are more likely to be similar than two observations that are far apart. In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between `Sightings` and the explanatory variables.
 
-
 Even if our model is not correct because of spatial autocorrelation, we can still visualize the predictors of the Negative Binomial GLM
 
 -   **First visualisation of result :**\
     Even if our model is not correct because of spatial autocorrelation, we can still visualize the predictors of the Negative Binomial GLM
 
-
 ## First visualisation of result
 
-For each point, we have a local Moran index.   
-Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. We have significant positive spatial autocorrelation (p-value \< 2.2e-16) : this means that two observations that are close together are more likely to be similar than two observations that are far apart.
-In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between `Sightings` and the explanatory variables.
+For each point, we have a local Moran index.\
+Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. We have significant positive spatial autocorrelation (p-value \< 2.2e-16) : this means that two observations that are close together are more likely to be similar than two observations that are far apart. In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between `Sightings` and the explanatory variables.
 
 Even if our model is not correct because of spatial autocorrelation, we can still visualize the predictors of the Negative Binomial GLM
 
@@ -786,23 +764,17 @@ It shows the effects plotted on the scale of the linear predictor, but the verti
 
 In the previous models, we have strong spatial autocorrelation. The GWR model can allow us to take **local** spatial dependence into account. For each observation, a regression is fitted only based on the localized neighborhood, so we obtain one intercept and one estimate for each point.
 
-
-We define the *SpatialPointsDataFrame* with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). We try to use log(Y+1) transformation on the response variable in a general linear model and then the ***gwr*** function. 
+We define the *SpatialPointsDataFrame* with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). We try to use log(Y+1) transformation on the response variable in a general linear model and then the ***gwr*** function.
 
 **GWR because of the non-stationarity** : I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(y+1) transformation on the response variable and the ***gwr*** function for general linear models.
 
-
 We can study Y_1 = log(Sightings + 1) as the response variable.
-
 
 We check the distribution of Y_1 = log(Sightings + 1)
 
 ```{r Y1}
 
 cassowary$Y_1 = log(cassowary$Sightings + 1)
-
-We define the *SpatialPointsDataFrame* with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(y+1) transformation on the response variable and the ***gwr*** function for general linear models.
-
 
 par(mfrow = c(2, 2),
     mar = c(4, 4, 2, 1),
@@ -829,7 +801,6 @@ dotchart(cassowary$Y_1,
          main = 'Cleveland plot',
          cex = 0.8)
 
-```{r}
 
 
 # Histogram --------------------------------------------------------------------
@@ -845,16 +816,17 @@ qqnorm(cassowary$Y_1, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot")
 qqline(cassowary$Y_1, col='red', lwd=2)
 
 ```
+
 Still a lot of zeros... Le log ne règle pas le problème des zéros.
 
 We try to fit the model with the sames variables as in the previous glm.
+
 ```{r model lm}
 try_linear = lm (Y_1 ~ Rainforest.P + Residential.P + Fruit.P + Total_Road, data = cassowary)
 summary(try_linear)
 ```
 
 This leads to make the distribution of the response closer to a Gaussian, allowing the use of classical GWR (gwr) on a linear model.
-
 
 Etudier le R² ajusté ?
 
@@ -890,6 +862,7 @@ plot(residuals(try_linear)~ cassowary$Rainforest.P,
 abline(h = 0)
 
 ```
+
 No comment...
 
 Spatial autocorrelation test :
@@ -899,6 +872,7 @@ Spatial autocorrelation test :
 testSpatialAutocorrelation(simulateResiduals(try_linear), 
                            x = cassowary$longitude, y = cassowary$latitude)
 ```
+
 Presence of spatial autocorrelation
 
 remettre le modèle lm ? Vérifier la normalité des résidus de la transformation. Vérifier la corrélation spatiale des résidus (Moran, DHARMa si possible). Vérifier l’hétéroscédasticité
@@ -906,7 +880,6 @@ remettre le modèle lm ? Vérifier la normalité des résidus de la transformati
 #remettre le modèle lm ? #Vérifier la normalité des résidus de la transformation. #Vérifier la corrélation spatiale des résidus (Moran, DHARMa si possible). #Vérifier l’hétéroscédasticité
 
 To apply the GWR model, we have to define the SpatialPointsDataFrame with both variables and coordinates in an object called `geocass.` At this stage, we also optimize the bandwidth (a metric that represents a distance between points or the number of neighbors used in each regression) for the kernel function (neighborhood weighting function) and then we run the GWR model. The determination of the bandwith is actually based on the spatial autocorrelogram and most notably, the influence of the neighbors is weighted by a decreasing function of distance.
-
 
 ```{r}
 geocass <- SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
@@ -925,7 +898,7 @@ names(lmgwrD$SDF)
 
 Since it is a spatial object we can map the coefficient and their significativity. Significativity of coefficient is not automatically computed by R, but, we can use the coefficient and their standard error to get a t-statistic. Under the null hypothesis, the t ratio follows a t distribution, and hence one can calculate the probability. To do this, first get the degrees of freedom from the gwr results object. For instance, we can test the significativity of the parameters.
 
-#### Getting the statistics for the GWR model : 
+#### Getting the statistics for the GWR model :
 
 ```{r}
 dfree <- lmgwrD$results$edf
@@ -955,7 +928,7 @@ gwr_signif_all <- lapply(vars, function(v) {
 }) %>% bind_rows()
 ```
 
-#### Visualization of the GWR local coefficients for each variable 
+#### Visualization of the GWR local coefficients for each variable
 
 ```{r}
 #To visualize one variable at once 
@@ -969,7 +942,7 @@ ggplot(gwr_signif_all %>% filter(variable == "Rainforest.P"),
   ggtitle("GWR local coefficients for Rainforest.P")
 ```
 
-#### Visualization of all the GWR local coefficients at the same time 
+#### Visualization of all the GWR local coefficients at the same time
 
 ```{r}
 #To visualize all the variables in a single window : 
