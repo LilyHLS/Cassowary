@@ -1,5 +1,7 @@
 ---
-title: "ASA_Project_Cassowary"
+title: "Advanced statistical analysis (ASA)"
+subtitle: "Cassowary Project"
+author: "Capucine Benoit-Grignard, Lily Houles, Adèle Kieffer, Valentin Lucas, Ifssan Sairi"
 date: "`r Sys.Date()`"
 format:
   html:
@@ -8,10 +10,18 @@ format:
     number-sections: true
     code-fold: true
     bibliography: references.bib
+    embed-resources: true
     theme: cosmo
     highlight-style: pygments
-fig.align: 'center'
+    fig.align: center
 ---
+
+```{css}
+#| echo: false
+p {
+  text-align: justify
+}
+```
 
 # Introduction & context
 
@@ -19,13 +29,14 @@ fig.align: 'center'
 
 The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered status and elusive behavior (@moore_population_2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (@moore_population_2007). This bird occur in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (@moore_population_2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (@westcott_counting_1999, Campbell et *al.*, 2023). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds over long distance (@westcott_counting_1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services, 2001).
 
-It is essential to estimate the factors that may impact the abundance of southern cassowary population in order to ensure its conservation. In 2016, @dwyer_using_2016 used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 (20 years) on 1 km² grid-cells covering the study area.\
-Using this data, compiled with the habitat variables and the distance of road location of each grid-cells (@tbl-descrva) by @dwyer_using_2016, we aim to answer the following questions :
+It is essential to estimate the factors that may impact the abundance of southern cassowary population in order to ensure its conservation. @dwyer_using_2016 used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 (20 years) on 1 km² grid-cells covering the study area.\
+Using this data, compiled with the habitat variables and the distance of road location of each grid-cells (@tbl-descrva) by @dwyer_using_2016, we aim to answer the following questions :     
 **Which factors influence the southern cassowary abundance ? Is there any implication for strike mortality management ?**
 
 ![](images/fig1_study_area.png){width="669"}
 
-**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat. (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and traffic strikes that have occurred are geo-referenced in 1 km grid cells.
+**Fig. 1.** (a) Predicted distribution of southern cassowary *Casuarius casuarius johnsonii* in the Wet Tropics region of Queensland, Australia. Grey shaded area represents predicted cassowary habitat.    
+(b) Map of the study area showing the locations of roads and landscape features. The number of sightings and traffic strikes that have occurred are geo-referenced in 1 km grid cells. (from @dwyer_using_2016)
 
 ::: {#tbl-descrva}
 | Variable name | Ecological reference |
@@ -80,6 +91,7 @@ library(spgwr) #to run geographically weighted regression
 library(dplyr)
 #library(mapview) # maps with openstreetMa
 library(corrplot) #correlation plot
+library(effects) # ploter les effets des variables
 ```
 
 # Data exploration
@@ -150,12 +162,12 @@ table(cassowary$Sightings)
 prop.table(table(cassowary$Sightings)) * 100
 ```
 
-*Sightings* were obtained thanks to counting : we will probably use a Generalized Linear Model using Poisson distribution to study it.
+`Sightings` were obtained thanks to counting : we will probably use a Generalized Linear Model using Poisson distribution to study it.
 
 65% of Y values are zeros : it represents a lot of zeros and it may have an influence on the model. The maximum value is really high : 572. The large dispersion of values and the amount of zeros can then influence the model and the way we will formulate it to study Sightings. 
 
 In the literature, the actual abundance of cassowaries rarely exceeds 3 individuals/km² (add source ?).
-In some cells, some values of Sightings are up to 100 counts / km², but it can be normal : as explained before, *Sightings* don't reflect actual abundance of cassowaries but the frequency of observation by citizens.
+In some cells, some values of Sightings are up to 100 counts / km², but it can be normal : as explained before, `Sightings` don't reflect actual abundance of cassowaries but the frequency of observation by citizens.
 
 The data will be discussed because an overcounting by citizens can be possible. Sometimes individuals car be double-counted in the context of a citizen science program. 
 We could then attempt to study Y as it is and then limit the counts in certain cells to limit overdispersion and compare different methods.
@@ -168,12 +180,14 @@ We assume that the environmental variables that can influence cassowary abundanc
 ```{r X abundance variables, fig.show = "hold"}
 #| label: fig-distribenv
 #| fig-cap: "Distribution of environmental variables"
+#| fig-show: hold
 
 env <- cassowary %>%
   dplyr::select(Rainforest.P, Residential.P, Fruit.P, Other.P)
 
 par(mfrow = c(2, 2))
 for(i in 1:ncol(env)){
+  par(mfrow = c(2, 2))
   boxplot(env[,i], col = col_transp, border = "gray30", 
           ylab = colnames(env)[i], main = 'Boxplot')
   dotchart(env[,i], pch = 16, col = col_transp, border = "gray30", 
@@ -186,8 +200,8 @@ for(i in 1:ncol(env)){
 }
 ```
 
-We can note presence of outliers in some covariates (*Residential.P*)
-Maybe, we could try to perform a transformation of these covariates and consider a log-transformation.
+We can note presence of outliers in some covariates (`Residential.P` and `Total_Road`)
+Maybe, we could try to perform a transformation of these covariates (scale) 
 
 -   **Description of quantitative binary variables : Fruit.01 and Residential.01**
 ```{r}
@@ -303,18 +317,18 @@ par(mfrow=c(2,2))
 # Interactions between Rainforest.P & Fruit.01 ---------------------------------
 plot(cassowary$Sightings ~ cassowary$Rainforest.P, type = 'n',
      ylab = "Sightings", xlab = "Proportion of rainforest")
-points(Sightings[Fruit.01 == "0"] ~ Rainforest.P[Fruit.01 == "0"], 
+points(cassowary$Sightings[cassowary$Fruit.01 == "0"] ~ cassowary$Rainforest.P[cassowary$Fruit.01 == "0"], 
        pch = 16, col = 'darkolivegreen4', data = cassowary) 
-points(Sightings[Fruit.01 == "1"] ~ Rainforest.P[Fruit.01 == "1"], 
+points(cassowary$Sightings[cassowary$Fruit.01 == "1"] ~ cassowary$Rainforest.P[Fruit.01 == "1"], 
        pch = 17, col = 'darkorchid', data = cassowary) 
 
 # Interactions between Rainforest.P & Residential.01 ---------------------------
 plot(Sightings ~ Rainforest.P, type = 'n',
-     ylab = "Sightings", xlab = "Proportion of rainforest")
+     ylab = "Sightings", xlab = "Proportion of rainforest", data = cassowary)
 points(Sightings[Residential.01 == "0"] ~ Rainforest.P[Residential.01 == "0"],
-       pch = 16, col = 'darkolivegreen4') 
+       pch = 16, col = 'darkolivegreen4', data = cassowary) 
 points(Sightings[Residential.01 == "1"] ~ Rainforest.P[Residential.01 == "1"],
-       pch = 17, col = 'darkorchid') 
+       pch = 17, col = 'darkorchid', data = cassowary) 
 
 # Interactions between Residential.P & Fruit.01
 
@@ -439,7 +453,7 @@ semivar_residp <- variog(geo_residp, option = "bin", max.dist = 30000, messages 
 semivar_fruitp <- variog(geo_fruitp, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_otherp <- variog(geo_otherp, option = "bin", max.dist = 30000, messages = FALSE)
 
-par(mfrow = c(2, 2))
+par(mfrow = c(1, 1))
 plot(semivar_sight, main = "Sightings of cassowary")
 ```
 
@@ -447,6 +461,7 @@ plot(semivar_sight, main = "Sightings of cassowary")
 #| label: fig-semivario2
 #| fig-cap: "Empirical semi variogram for environmental variables"
 
+par(mfrow = c(2, 2))
 plot(semivar_rain, main = "Proportion of rainforest")
 #plot(semivar_residb, main = "Presence/absence of residential area")
 #plot(semivar_fruitb, main = "Presence/absence of fruit crop")
@@ -464,16 +479,9 @@ These types of graphs are usually typical of a **periodic phenomenon**, also kno
 This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
 
 ## Generalized Linears Models
-idée pour la démarche : 
-ce qu'on peut faire c'est d'abord GLM complet Poisson avec tous les effets et interactions : on teste la surdispersion ensuite comme ci-dessous
-si surdispersion : Negative Binomial
-on construit ensuite le modèle avec Negative Binomial 
-puis on sélectionne nos variables de notre modèle avec AIC par exemple 
-
 ### Poisson Distribution
 As we have count data, we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function.  
 
-<<<<<<< HEAD
 Some informations are redundant and correlated (@fig-corrplot) : we remove the variables `Residential.01` and `Fruit.01` (redundant with `Residential.P` and `Fruit.P`) and `Other.P` (correlated to `Rainforest.P`).
 
 Since some explanatory variables had different scales, we scaled them (*scale* function). However, in order to be able to compare the effects of the variables with each other, we only centred them (*scale = F)* without reducing them.
@@ -522,7 +530,7 @@ plot(simout)
 Here, the Pearson residuals are way above 1, so there is overdispersion which can be due to outliers, model misfit, missing interactions and zero-inflation.
 
 ### Negative Binomial Distribution
-To account for the overdispersion of the residuals, we switch to a **negative binomial model**.
+To account for the overdispersion of the residuals, we switch to a **negative binomial model**, with a log link.
 ```{r}
 glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P, data = cassowary)
 drop1(glm_NB, test = "Chi")
@@ -532,7 +540,6 @@ summary(glm_NB)
 Again, we check for overdispersion :
 
 ```{r}
-
 173.55/250 #ratio residual deviance / ddl : check of surdispersion dans le cas d'un modèle de poisson
 #Le residual deviance / ddl est préféré pour vérifier la surdispersion, car il se base sur la log-vraisemblance/moins sensible aux points extrêmes.
 
@@ -567,29 +574,28 @@ We still have an abnormal semi variogram ???
 -   **Spatial autocorrelation check :**   
 Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test.
 
-**Getting the residuals of the NB model**
-
-Usually, at first, we decide to fit a simple linear regression model to the data. However, here we already know this is not the best model to consider at first, especially because of the counting data we have for our response variable.
-
-```{r}
-glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P, data = cassowary)
-summary(glm_NB)
-```
-
-Test for the spatial autocorrelation in the residuals with Moran Test (Dharma package)
-
 ```{r}
 # Dharma procedure :
-testSpatialAutocorrelation(simulateResiduals(glm_NB), x = cassowary$longitude, y = cassowary$latitude)
+testSpatialAutocorrelation(simulateResiduals(glm_NB), 
+                           x = cassowary$longitude, y = cassowary$latitude)
 ```
 
 For each point, we have a local Moran index.   
 Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. We have significant positive autocorrelation (p-value \< 2.2e-16) : this means that two observations that are close together are more likely to be similar than two observations that are far apart.
-In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between *Sightings* and the explanatory variables.
+In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between `Sightings` and the explanatory variables.
+
+## First visualisation of result 
+Even if our model is not correct because of spatial autocorrelation, we can still visualize the predictors of the Negative Binomial GLM
+```{r}
+#|label: plot_alleffects
+#|fig-cap: "Predictor effects on Sightings"
+plot(allEffects(glm_NB), ci.style = "bands")
+```
+It shows the effects plotted on the scale of the linear predictor, but the vertical axis is labelled on the response scale. This preserves the linear structure of the model while permitting interpretation on what is usually a more familiar scale (ref)
 
 ## Geostatistical model GWR
 
-We are now interested in the relationship that could occur between *Sightings* and the explanatory variables, taking into account the spatial effect.
+We are now interested in the relationship that could occur between `Sightings` and the explanatory variables, taking into account the spatial effect.
 
 **GWR because of the non-stationarity** :
 
@@ -619,7 +625,8 @@ lmgwrD <- gwr(log(Sightings+1) ~ Rainforest.P + Residential.P + Fruit.P,
 summary(lmgwrD)
 ```
 
-The main interesting output is the SDF : the variables (intercept) and "Rainforest.P", "Residential.P", "Other.P"and "Fruit.P" give the regression coefficients. Intercept.se and Rainforest.P\_\_se, Residential.P\_\_se, Other.P\_\_se and Fruit.P\_\_se give the coefficient standard errors.
+The main interesting output is the SDF : the variables (intercept) and `Rainforest.P`, `Residential.P`, `Other.P` and `Fruit.P` give the regression coefficients.   
+`Intercept.se` and `Rainforest.P_se`, `Residential.P_se`, `Other.P_se` and `Fruit.P_se` give the coefficient standard errors.
 
 ```{r}
 names(lmgwrD$SDF)
