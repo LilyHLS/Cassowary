@@ -28,7 +28,7 @@ p {
 
 ![](images/cassowary.jpg){width="672"}
 
-The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered status and elusive behavior (@moore_population_2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (@moore_population_2007). This bird occur in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (@moore_population_2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (@westcott_counting_1999, Campbell et *al.*, 2023). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds over long distance (@westcott_counting_1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services, 2001).
+The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered status and elusive behavior (@moore_population_2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (@moore_population_2007). This bird occur in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (@moore_population_2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (@westcott_counting_1999, @campbell_southern_2023). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds over long distance (@westcott_counting_1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services, 2001).
 
 It is essential to estimate the factors that may impact the abundance of southern cassowary population in order to ensure its conservation. @dwyer_using_2016 used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 (20 years) on 1 km² grid-cells covering the study area.\
 Using this data, compiled with the habitat variables and the distance of road location of each grid-cells (@tbl-descrva) by @dwyer_using_2016, we aim to answer the following questions :\
@@ -527,8 +527,8 @@ summary(glm_pois)
 AIC(glm_pois)
 ```
 
--   **Overdispersion check (scale parameter calculation) :**\
-    *Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
+-   **Overdispersion check (scale parameter calculation) :**    
+*Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models. (@dharma_hartig)*
 
 ```{r}
 simout <- simulateResiduals(fittedModel = glm_pois, plot = F)
@@ -619,7 +619,7 @@ plot(semivar_resid, main = "Semi-variogramme des résidus NB")
 We still have an abnormal semi variogram ???
 
 -   **Spatial autocorrelation check :**\
-    Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test.
+    Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
 
 ```{r}
 # Dharma procedure :
@@ -875,8 +875,8 @@ testDispersion(simrespois)
 plot(simulateResiduals(glm_pois_strikes))
 testZeroInflation(simrespois)
 ```
-With the Poisson distribution, residuals are overfitted Residuals are overfitting, probably cause to zero-inflation or outliers in the Poisson distribution of our $Y$ variable. so we switch to a Negative Binomial distribution.
-To test the zero-inflation, we also apply the function implemented in DHARMa package and the result of the test is significant.
+With the Poisson distribution, residuals are overfitted, probably cause to zero-inflation or outliers. So we switch to a Negative Binomial distribution.
+To test the zero-inflation, we also apply the function implemented in DHARMa package (@dharma_hartig) and the result of the test is significant.
 
 ### GLM with Negative Binomial distribution
 To account for the overdispersion of the residuals, we switch to a GLM with a **Negative binomial** distribution, with a log link function. 
@@ -911,10 +911,10 @@ testDispersion(simresnb)
 plot(simulateResiduals(glm_nb_strikes))
 testZeroInflation(simresnb)
 ```
-With the negative binomial distribution, their is no more zero inflation. Their is no more overfitting in the residuals.
+With the negative binomial distribution, their is no more zero inflation. Their is no more overfitting in the residuals (@dharma_hartig).
 
 -   **Spatial autocorrelation check :**\
-    Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test.
+Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
 ```{r}
 testSpatialAutocorrelation(simulateResiduals(glm_nb_strikes), 
                            x = cassowary$longitude, y = cassowary$latitude)
