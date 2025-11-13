@@ -458,6 +458,12 @@ These types of graphs are usually typical of a **periodic phenomenon**, also kno
 This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
 
 ## Generalized Linears Models
+idée pour la démarche : 
+ce qu'on peut faire c'est d'abord GLM complet Poisson avec tous les effets et interactions : on teste la surdispersion ensuite comme ci-dessous
+si surdispersion : Negative Binomial
+on construit ensuite le modèle avec Negative Binomial 
+puis on sélectionne nos variables de notre modèle avec AIC par exemple 
+
 ### Poisson Distribution
 Since we 
 Maybe, remove the variables `Residential.01` and `Fruit.01` because of redundant information with the variables `Residential.P` and `Fruit.P` ? Transform the variables `Residential.01` and `Fruit.01` into qualitative ones ? Yes : maybe before the semi-variogram plot
@@ -467,23 +473,24 @@ We can also remove `Other.P` : too correlated to `Rainforest.P`
 Idée de modèle complet pour Poisson avec interactions (je ne sais pas si on met les interactions si ça a vraiment un sens) : 
 
 ```{r}
-glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + 
-                  Residential.01 + Fruit.01 + Rainforest.P:Fruit.01 +
-                  Rainforest.P:Residential.01 + Residential.P:Fruit.01 + 
-                  Fruit.P:Residential.01, 
-                data = cassowary, family=poisson(link="log"))
+# Avec interaction 
+# glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + 
+#                   Residential.01 + Fruit.01 + Rainforest.P:Fruit.01 +
+#                   Rainforest.P:Residential.01 + Residential.P:Fruit.01 + 
+#                   Fruit.P:Residential.01, 
+#                 data = cassowary, family = poisson(link="log"))
 
+glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + 
+                  Residential.01 + Fruit.01 + scale(Total_Road, scale = F) + 
+                  scale(Dresid, scale = F) + scale(Dfruit, scale = F), 
+                data = cassowary, family = poisson(link="log"))
 drop1(glm_pois,test="Chi")
 summary(glm_pois)
+AIC(glm_pois)
 ```
 
-idée pour la démarche : 
-ce qu'on peut faire c'est d'abord GLM complet Poisson avec tous les effets et interactions : on teste la surdispersion ensuite comme ci-dessous
-si surdispersion : Negative Binomial
-on construit ensuite le modèle avec Negative Binomial 
-puis on sélectionne nos variables de notre modèle avec AIC par exemple 
-
-Overdispersion check (scale parameter calculation) : *Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
+-   **Overdispersion check (scale parameter calculation) :**    
+*Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
 
 ```{r}
 E1 <- resid(glm_pois, type = "pearson") # (Y - mu) / sqrt(mu)
@@ -498,8 +505,7 @@ plot(simout)
 Here, the Pearson residuals are way above 1, so there is overdispersion which can be due to outliers, model misfit, missing interactions and zero-inflation.
 
 ### Negative Binomial Distribution
-So we first try to change the model distribution to negative binomial : 
-
+To account for the overdispersion of the residuals, we switch to a **negative binomial model**.
 ```{r}
 glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + 
                    Residential.01 + Fruit.01, 
@@ -561,16 +567,17 @@ plot(semivar_resid, main = "Semi-variogramme des résidus NB")
 
 We still have an abnormal semi variogram ???
 
-### Spatial autocorrelation check 
-
-Test for the spatial autocorrelation in the residuals with Moran Test :
+-   **Spatial autocorrelation check :**   
+Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test.
 ```{r}
 # Dharma procedure :
 testSpatialAutocorrelation(simulateResiduals(glm_NB), 
                            x = cassowary$latitude, y = cassowary$longitude)
 ```
 
-For each point, we have a local Moran index. The distance based autocorrelation of the residuals is highly significative (p-value \< 2.2e-16). In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between *Sightings* and the explanatory variables.
+For each point, we have a local Moran index.   
+Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. We have positive autocorrelation : this means that two observations that are close together are more likely to be similar than two observations that are far apart.
+The distance based autocorrelation of the residuals is highly significative (p-value \< 2.2e-16). In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between *Sightings* and the explanatory variables.
 
 ## Geostatistical model
 
