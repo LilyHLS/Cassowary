@@ -990,6 +990,8 @@ ggplot(gwr_signif_all,
 
 ## Results 
 
+The relationship between `Sightings` and `Fruit.P`, `Residential.P` and `Total_Road` mostly translates very well significantly to the Northeast whereas the significant effect of `Rainforest.P` is more widespread spatially. Where the effects of the variables are significant, they are also mainly positive. Even if the interpretation on the log scale is not very intuitive, we can still say that locally the greater the proportion of fruit crops, residential areas, rainforest and the larger the total road area within the grid, the greater the abundance of cassowary. The variables that seem to have the most impact (greater coefficients) on the abundance of cassowary are `Fruit.P`, `Residential.P` and `Rainforest.P.` These results validate the hypothesis made when including the explanatory variables into the first model : the abundance of cassowary is mainly regulated by the proportion of fruit crop available because it represents a source of food and the proportion of rainforest because cassowary mostly need forest as a natural habitat. The results we have for the effects of proportion of residential area and total road rather differ from the assumptions we made : this could be due to an observation bias we usually find in participative science studies. In fact, areas more populated by humans are also those where humans are more likely to report the presence of cassowary because humans explore less the forest or fruit crops where cassowary abundance is directly linked to the ecology of the species.
+
 ## Discussion
 
 # Mortality of cassowary
