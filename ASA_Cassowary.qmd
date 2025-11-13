@@ -485,13 +485,17 @@ This is an important thing to consider because behind the variogram, there are 2
 
 ### Generalized Linears Models with Poisson Distribution
 
-As we have count data, we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function.
+As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function ().      
+$Sightings$ ~ $P(\lambda)$, with $\lambda$, the expectation and variance rate of events. Here, variance increases linearly with the mean.   
+With the log link function : $log(\lambda_i) = \alpha + \beta_iX_i + \varepsilon_{i}$  
+with :   
+-   $\alpha$ the intercept,  
+-   $\beta$ the coefficient represnting the effect of each independant variables on $\lambda$,  
+-   $\varepsilon$ the residuals,   
+-   $X_i$ the independent variables   
+Here, we model $log(\lambda_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \varepsilon_{i}$  
 
 Some informations are redundant and correlated (@fig-corrplot) : we remove the variables `Residential.01` and `Fruit.01` (redundant with `Residential.P` and `Fruit.P`) and `Other.P` (correlated to `Rainforest.P`).
-
-Since some explanatory variables had different scales, we scaled them (*scale* function). However, in order to be able to compare the effects of the variables with each other, we only centred them (*scale = F)* without reducing them.
-
-Adele : I studied `Residential.01` and `Fruit.01` as qualitative in data exploration,
 
 ```{r}
 glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P, 
@@ -501,17 +505,8 @@ summary(glm_pois)
 AIC(glm_pois)
 ```
 
-```{r}
-glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + 
-                  Residential.01 + Fruit.01 + scale(Total_Road, scale = F) + 
-                  scale(Dresid, scale = F) + scale(Dfruit, scale = F), 
-                data = cassowary, family = poisson(link="log"))
-drop1(glm_pois,test="Chi")
-```
-
--   **Overdispersion check (scale parameter calculation) :**\
-    *Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
-
+-   **Overdispersion check (scale parameter calculation) :**    
+*Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
 ```{r}
 simout <- simulateResiduals(fittedModel = glm_pois, plot = F)
 plot(simout)
@@ -519,7 +514,9 @@ plot(simout)
 
 Here, there is overdispersion, it can be due to outliers, model misfit, missing interactions and zero-inflation.
 
-Ratio residual deviance / ddl $\phi$ : It allows us to estimate whether the actual variance of the observations is not too far from the theoretical variance : \$ \phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}\$\
+Ratio residual deviance / ddl $\phi$ : 
+It allows us to estimate whether the actual variance of the observations is not too far from the theoretical variance :
+$\phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}$   
 If this ratio is greater than 1, then there is overdispersion. It is based on log-likelihood and is less sensitive to extreme points.
 
 ```{r}
@@ -539,20 +536,25 @@ sum(E1^2) / (N - p)
 
 Here, the Pearson residuals are way above 1, so there is overdispersion.
 
-### Generalized Linears Models with Negative Binomial Distribution
-
-To account for the overdispersion of the residuals, we switch to a **negative binomial model**, with a log link.
-
+### Generalized Linears Model with Negative Binomial Distribution
+To account for the overdispersion of the residuals, we switch to a GLM with a **Negative binomial** distribution, with a log link function. 
+$Sightings$ ~ $NB(\mu, \phi)$, with $\mu$ the mean of the distribution, and $\phi$ the dispersion parameters.  
+With the log link function : $log(\mu_i) = \alpha + \beta_iX_i + \varepsilon_{i} = \eta$    
+with :   
+-   $\alpha$ the intercept,  
+-   $\beta$ the coefficient representing the effect of each independant variables on $\lambda$,  
+-   $\varepsilon$ the residuals,   
+-   $X_i$ the independent variables 
+Here, we model $log(\mu_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \varepsilon_{i}$ 
 ```{r}
-glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P, data = cassowary)
+glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P, 
+                 data = cassowary)
 drop1(glm_NB, test = "Chi")
 summary(glm_NB)
 ```
 
-Again, we check for overdispersion :
-
--   Ratio residual deviance / ddl :
-
+-   **Overdispersion check (scale parameter calculation) :**    
+Ratio residual deviance / ddl : 
 ```{r}
 173.55/250
 ```
@@ -564,11 +566,13 @@ E1 <- resid(glm_NB, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
 p  <- length(coef(glm_NB))
 sum(E1^2) / (N - p)
+```
 
+Dharma test : 
+```{r}
 simout <- simulateResiduals(fittedModel = glm_NB, plot = F)
 plot(simout)
 ```
-
 No more overdispersion : the negative binomial distribution seems appropriate in this case. If this had not been the case, we would have considered other distributions, such as the one that include zero-inflation (i.e. a situation when more zeros appear in the observation than expected under the fitted model).
 
 Just in case, we can check out zeroinflation :
@@ -700,9 +704,10 @@ ggplot(gwr_signif_all,
 
 # Mortality of cassowary
 
-## Distribution of variables
+## Data exploration
+### Distribution of variables
 
-#### Distribution of the response variable Strikes $Y$ {.unnumbered}
+#### Distribution of the response variable Strikes $Y$
 
 ```{r data response variable mortality}
 #| label: fig-strikes_descr
@@ -745,9 +750,10 @@ qqnorm(cassowary$Strikes, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot
 qqline(cassowary$Strikes, col='red', lwd=2)
 ```
 
-Their is some outliers values in the strike distribution (@fig-stikes_descr). Most of values stop to 5 strikes on a grid cell, but their is one with 13 strikes listed. As we don't have any information on the temporal observation, we will keep all values in the model. The strikes are counted, the variable follows a Poisson distribution
+Their is some outliers values in the strike distribution (@fig-strikes_descr). Most of values stop to 5 strikes on a grid cell, but their is one with 13 strikes listed. As we don't have any information on the temporal observation, we will keep all values in the model. 
+The strikes are counted, the variable follows a Poisson distribution
 
-#### Distribution of environmental variables $X$ {.unnumbered}
+#### Distribution of environmental variables $X$
 
 ```{r}
 cassowary$LogSightings <- log(cassowary$Sightings +1)
@@ -772,7 +778,7 @@ for(i in 1:ncol(road)){
 
 We want to test which variables influence road mortality. To to this, we keep the total proportion of roads in the grid cell, but also the distance between the roads and fruit crops as well as the distance between the roads and residential area. As cassowaries have a territory of about 1km² we assume that their chances to encountering a road are high if they live close to one. We can add `Sightings` to check if mortality strike is influenced by density of Cassowary. If we use `Sightings`, we can do a log+1 transformation because there are outliers in the distribution of `Sightings`.
 
-#### Potential relationships between response variable (Strikes) and explanatory variables
+### Potential relationships between response variable (Strikes) and explanatory variables
 
 ```{r}
 par(mfrow=c(3, 2))
@@ -816,7 +822,17 @@ corrplot(corelation, type = "upper", method = "number")
 There is a correlation between `Sightings` and `LogSightings` but we will just keep the log in the model.
 
 ## Statistical Analysis
-
+### GLM with Poisson Distribution
+As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function ().      
+$Strikings$ ~ $P(\lambda)$, with $\lambda$, the expectation and variance rate of events. Here, variance increases linearly with the mean.   
+With the log link function : $log(\lambda_i) = \alpha + \beta_iX_i + \varepsilon_{i}$  
+with :   
+-   $\alpha$ the intercept,  
+-   $\beta$ the coefficient represnting the effect of each independant variables on $\lambda$,  
+-   $\varepsilon$ the residuals,   
+-   $X_i$ the independent variables   
+Here, we model $log(\lambda_i) = \alpha + \beta_1TotalRoad_i + \beta_2Dresid_i + \beta_3Dfruit_i + \beta \varepsilon_{i}$  
+Since some explanatory variables had different scales, we scaled them (*scale* function). However, in order to be able to compare the effects of the variables with each other, we only centred them (*scale = F)* without reducing them.
 ```{r}
 glm_pois_strikes <- glm(Strikes ~ scale(Total_Road) + scale(Dresid) + scale(Dfruit) + LogSightings,
                 data = cassowary, 
@@ -830,11 +846,22 @@ testDispersion(simrespois)
 plot(simulateResiduals(glm_pois_strikes))
 testZeroInflation(simrespois)
 ```
+With the Poisson distribution, residuals are overfitted Residuals are overfitting, probably cause to zero-inflation or outliers in the Poisson distribution of our $Y$ variable. so we switch to a Negative Binomial distribution.
+To test the zero-inflation, we also apply the function implemented in DHARMa package and the result of the test is significant.
 
-With the Poisson distribution, residuals are overfitted so we switch to a Negative Binomial distribution.
-
+### GLM with Negative Binomial distribution
+To account for the overdispersion of the residuals, we switch to a GLM with a **Negative binomial** distribution, with a log link function. 
+$Strikings$ ~ $NB(\mu, \phi)$, with $\mu$ the mean of the distribution, and $\phi$ the dispersion parameters.  
+With the log link function : $log(\mu_i) = \alpha + \beta_iX_i + \varepsilon_{i} = \eta$    
+with :   
+-   $\alpha$ the intercept,  
+-   $\beta$ the coefficient representing the effect of each independant variables on $\lambda$,  
+-   $\varepsilon$ the residuals,   
+-   $X_i$ the independent variables 
+Here, we model $log(\mu_i) = \alpha + \beta_1TotalRoad_i + \beta_2Dresid_i + \beta_3Dfruit_i + \beta_4log(Sightings_i+1) \varepsilon_{i}$ 
 ```{r}
-glm_nb_strikes <- glm.nb(Strikes ~ scale(Total_Road) + scale(Dresid) + scale(Dfruit) + LogSightings,data = cassowary)
+glm_nb_strikes <- glm.nb(Strikes ~ scale(Total_Road) + scale(Dresid) + scale(Dfruit) + LogSightings,
+                         data = cassowary)
 summary(glm_nb_strikes)
 ```
 
@@ -853,6 +880,9 @@ testDispersion(simresnb)
 plot(simulateResiduals(glm_nb_strikes))
 testZeroInflation(simresnb)
 ```
+
+With the negative binomial distribution, their is no more zero inflation. Their is no more overfitting in the residuals.
+
 
 With the step AIC we choose the best model. We keep the one with the three variables `LogSightings`, `Dfruit` and `Total_Road` even if the last two variables are not significant. The residuals respect the assumption.
 
