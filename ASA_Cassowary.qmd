@@ -183,11 +183,11 @@ We assume that the environmental variables that can influence cassowary abundanc
 #| fig-show: hold
 
 env <- cassowary %>%
-  dplyr::select(Rainforest.P, Residential.P, Fruit.P, Other.P)
+  dplyr::select(Rainforest.P, Residential.P, Fruit.P, Other.P, Total_Road, 
+                Residential.01, Fruit.01, Dresid, Dfruit)
 
 par(mfrow = c(2, 2))
 for(i in 1:ncol(env)){
-  par(mfrow = c(2, 2))
   boxplot(env[,i], col = col_transp, border = "gray30", 
           ylab = colnames(env)[i], main = 'Boxplot')
   dotchart(env[,i], pch = 16, col = col_transp, border = "gray30", 
