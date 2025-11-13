@@ -931,8 +931,7 @@ gwr_signif_all <- lapply(vars, function(v) {
 #### Visualization of the GWR local coefficients for each variable
 
 ```{r}
-#To visualize one variable at once 
-ggplot(gwr_signif_all %>% filter(variable == "Rainforest.P"),
+ ggplot(gwr_signif_all %>% filter(variable == "Rainforest.P"),
   aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
   geom_point() +
   scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
@@ -940,6 +939,39 @@ ggplot(gwr_signif_all %>% filter(variable == "Rainforest.P"),
   scale_size_continuous(range = c(1, 8)) +
   theme_bw() +
   ggtitle("GWR local coefficients for Rainforest.P")
+```
+
+```{r}
+ggplot(gwr_signif_all %>% filter(variable == "Residential.P"),
+  aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
+  geom_point() +
+  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
+  scale_shape_manual(values = c("positive" = 16, "negative" = 17, "zero" = 15)) +
+  scale_size_continuous(range = c(1, 8)) +
+  theme_bw() +
+  ggtitle("GWR local coefficients for Residential.P")
+```
+
+```{r}
+ggplot(gwr_signif_all %>% filter(variable == "Fruit.P"),
+  aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
+  geom_point() +
+  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
+  scale_shape_manual(values = c("positive" = 16, "negative" = 17, "zero" = 15)) +
+  scale_size_continuous(range = c(1, 8)) +
+  theme_bw() +
+  ggtitle("GWR local coefficients for Fruit.P")
+```
+
+```{r}
+ggplot(gwr_signif_all %>% filter(variable == "Total_Road"),
+  aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
+  geom_point() +
+  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
+  scale_shape_manual(values = c("positive" = 16, "negative" = 17, "zero" = 15)) +
+  scale_size_continuous(range = c(1, 8)) +
+  theme_bw() +
+  ggtitle("GWR local coefficients for Total_Road")
 ```
 
 #### Visualization of all the GWR local coefficients at the same time
@@ -955,6 +987,8 @@ ggplot(gwr_signif_all,
   theme_bw() +
   ggtitle("Local Maps of GWR coefficients (Sightings log transformed)")
 ```
+
+## Results 
 
 ## Discussion
 
