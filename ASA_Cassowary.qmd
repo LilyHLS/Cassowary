@@ -69,7 +69,7 @@ library(tidyverse) #for data cleaning, ordering
 library(ggplot2)
 library(MASS)
 # Spatial analysis 
-library(geoR) #for spatial object to perform geostatistic
+#library(geoR) #for spatial object to perform geostatistic
 library(sp)
 library(sf) #deal with spatial data
 library(pgirmess) #for spatial correlogram
@@ -78,8 +78,7 @@ library(ade4) #used for plotting spatial data
 library(spatialreg) #used for spatial data modelling
 library(spgwr) #to run geographically weighted regression
 library(dplyr)
-library(mapview) # maps with openstreetMa
-library(GWmodel) # GWR but with Poisson distribution
+#library(mapview) # maps with openstreetMa
 library(corrplot) #correlation plot
 ```
 
@@ -163,7 +162,7 @@ We could then attempt to study Y as it is and then limit the counts in certain c
 
 #### Distribution of environmental variables $X$ {-}
 
-We assume that the environmental variables that can influence cassowary abundance are the abundance of a certain type of habitat and the presence/absence of these habitats in each cells where cassowaries are counted.
+We assume that the environmental variables that can influence cassowary abundance are the abundance of a certain type of habitat and the presence/absence of these habitats in cells where cassowaries are counted.
 
 -   **Description of quantitative continue variables :**
 ```{r X abundance variables, fig.show = "hold"}
@@ -187,8 +186,8 @@ for(i in 1:ncol(env)){
 }
 ```
 
-We can note presence of outliers in some covariates (*Residential.P* and *Total_Road*)
-Maybe, we could try to perform a transformation of these covariates and consider a log-transformation ?
+We can note presence of outliers in some covariates (*Residential.P*)
+Maybe, we could try to perform a transformation of these covariates and consider a log-transformation.
 
 -   **Description of quantitative binary variables : Fruit.01 and Residential.01**
 ```{r}
@@ -240,7 +239,8 @@ boxplot(cassowary$Sightings ~ cassowary$Fruit.01, pch = 16,
         ylab = 'Sightings')
 
 ```
-Using graphs, it seems difficult to see relations between $Y$ and $Xs$. One explanation is that there are a lot of zeros in `Sightings`. Nevertheless, we observe that more cassowary individuals are observed when `Rainforest.P` is higher. The opposite relation is observed between Y and `Other.P`. `Other.P` and `Rainforest.P` could be correlated : we check correlation between $Xs$ in the following section.
+Using graphs, it seems difficult to see relations between $Y$ and $Xs$. One explanation is that there are a lot of zeros in `Sightings`. Nevertheless, we observe that more cassowary individuals are observed when `Rainforest.P` is higher. The opposite relation is observed between Y and `Other.P`. 
+`Other.P` and `Rainforest.P` could be correlated : we check correlation between $Xs$ in the following section.
 
 ### Correlation between environmental variables $X$
 
@@ -402,7 +402,7 @@ With these observations and the collinearity observed before, we can keep `Rainf
 
 **a.) Without any modification of the data:**
 
-First, we have to investigate if there is spatial dependency in the variables and because this is a continuous process, we are going to visualize the semi-variograms. For this first model, related to the first problematic **"Which factors influence the southern cassowary abundance?"** we do not take into account `Strikes` and the variables directly linked to the road (`Total_Road`*,* `Dresid`&`Dfruit`).
+First, we have to investigate if there is spatial dependency in the variables and because this is a continuous process, we are going to visualize the semi-variograms. For this first model, related to the first problematic **"Which factors influence the southern cassowary abundance?"** we do not take into account `Strikes` and the variables directly linked to the road (`Total_Road`, `Dresid`&`Dfruit`).
 
 ```{r}
 geo_sight <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),
@@ -473,11 +473,18 @@ puis on sélectionne nos variables de notre modèle avec AIC par exemple
 ### Poisson Distribution
 As we have count data, we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function.  
 
+<<<<<<< HEAD
 Some informations are redundant and correlated (@fig-corrplot) : we remove the variables `Residential.01` and `Fruit.01` (redundant with `Residential.P` and `Fruit.P`) and `Other.P` (correlated to `Rainforest.P`).
 
 Since some explanatory variables had different scales, we scaled them (*scale* function). However, in order to be able to compare the effects of the variables with each other, we only centred them (*scale = F)* without reducing them.
 
 Adele : I studied `Residential.01` and `Fruit.01` as qualitative in data exploration,
+
+Idée de modèle complet pour Poisson : 
+
+```{r}
+glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P, data = cassowary, family=poisson(link="log"))
+```
 
 ```{r}
 # Avec interaction 
@@ -500,6 +507,9 @@ AIC(glm_pois)
 *Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
 
 ```{r}
+
+8807.7/250 #ratio residual deviance / ddl : check of surdispersion
+
 E1 <- resid(glm_pois, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
 p  <- length(coef(glm_pois))
@@ -514,38 +524,18 @@ Here, the Pearson residuals are way above 1, so there is overdispersion which ca
 ### Negative Binomial Distribution
 To account for the overdispersion of the residuals, we switch to a **negative binomial model**.
 ```{r}
-glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Other.P + 
-                   Residential.01 + Fruit.01, 
-                 data = cassowary)
-
+glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P, data = cassowary)
 drop1(glm_NB, test = "Chi")
+summary(glm_NB)
 ```
 
-```{r}
-glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P + 
-                   Residential.01 + Fruit.01, 
-                 data = cassowary)
-
-drop1(glm_NB, test = "Chi")
-```
+Again, we check for overdispersion :
 
 ```{r}
-glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P + Fruit.01, 
-                 data = cassowary)
 
-drop1(glm_NB, test = "Chi")
-```
+173.55/250 #ratio residual deviance / ddl : check of surdispersion dans le cas d'un modèle de poisson
+#Le residual deviance / ddl est préféré pour vérifier la surdispersion, car il se base sur la log-vraisemblance/moins sensible aux points extrêmes.
 
-```{r}
-glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Other.P,
-                 data = cassowary)
-
-drop1(glm_NB, test = "Chi")
-```
-
-Here, there is the final model with only significant effects. Again, we check for overdispersion :
-
-```{r}
 E1 <- resid(glm_NB, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
 p  <- length(coef(glm_NB))
@@ -576,10 +566,21 @@ We still have an abnormal semi variogram ???
 
 -   **Spatial autocorrelation check :**   
 Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test.
+
+**Getting the residuals of the NB model**
+
+Usually, at first, we decide to fit a simple linear regression model to the data. However, here we already know this is not the best model to consider at first, especially because of the counting data we have for our response variable.
+
+```{r}
+glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P, data = cassowary)
+summary(glm_NB)
+```
+
+Test for the spatial autocorrelation in the residuals with Moran Test (Dharma package)
+
 ```{r}
 # Dharma procedure :
-testSpatialAutocorrelation(simulateResiduals(glm_NB), 
-                           x = cassowary$latitude, y = cassowary$longitude)
+testSpatialAutocorrelation(simulateResiduals(glm_NB), x = cassowary$longitude, y = cassowary$latitude)
 ```
 
 For each point, we have a local Moran index.   
@@ -592,14 +593,28 @@ We are now interested in the relationship that could occur between *Sightings* a
 
 **GWR because of the non-stationarity** :
 
-We define the *SpatialPointsDataFrame* with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(x+1) transformation on the response variable and the ***gwr*** function for general linear models.
+autocorrélation spatiale positive très significative.
+
+We define the *SpatialPointsDataFrame* with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(y+1) transformation on the response variable and the ***gwr*** function for general linear models. 
+
+faut-il réétudier Sightings ? 
+```{r}
+
+```
+This leads to make the distribution of the response closer to a Gaussian, allowing the use of classical GWR (gwr) on a linear model.
+
+#remettre le modèle lm ?
+#Vérifier la normalité des résidus de la transformation.
+#Vérifier la corrélation spatiale des résidus (Moran, DHARMa si possible).
+#Vérifier l’hétéroscédasticité 
+
 
 ```{r}
 geocass <- SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
                                   data.frame(cassowary[,c("Rainforest.P","Residential.P","Other.P","Fruit.P", "Sightings")]))
-gwr.bw <- gwr.sel(log(Sightings+1) ~ Rainforest.P + Residential.P + Other.P + Fruit.P,
+gwr.bw <- gwr.sel(log(Sightings+1) ~ Rainforest.P + Residential.P + Fruit.P,
                   data = geocass, adapt = FALSE)
-lmgwrD <- gwr(log(Sightings+1) ~ Rainforest.P + Residential.P + Other.P + Fruit.P,
+lmgwrD <- gwr(log(Sightings+1) ~ Rainforest.P + Residential.P + Fruit.P,
               data = geocass, bandwidth = gwr.bw, se.fit = T, hatmatrix = T)
 summary(lmgwrD)
 ```
@@ -615,7 +630,7 @@ Since it is a spatial object we can map the coefficient and their significativit
 ```{r}
 dfree <- lmgwrD$results$edf
 
-vars <- c("Rainforest.P", "Residential.P", "Other.P", "Fruit.P")
+vars <- c("Rainforest.P", "Residential.P", "Fruit.P")
 
 gwr_signif_all <- lapply(vars, function(v) {
   
