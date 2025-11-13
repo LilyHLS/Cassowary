@@ -485,7 +485,7 @@ This is an important thing to consider because behind the variogram, there are 2
 
 ### GLM with Poisson Distribution
 
-As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function ().      
+As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function (@mohammed2025spatial).      
 $Sightings$ ~ $P(\lambda)$, with $\lambda$, the expectation and variance rate of events. Here, variance increases linearly with the mean.   
 With the log link function : $log(\lambda_i) = \alpha + \beta_iX_i + \varepsilon_{i}$  
 with :   
@@ -825,7 +825,7 @@ There is a correlation between `Sightings` and `LogSightings` but we will just k
 
 ## Statistical Analysis
 ### GLM with Poisson Distribution
-As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function ().      
+As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function (@mohammed2025spatial).      
 $Strikings$ ~ $P(\lambda)$, with $\lambda$, the expectation and variance rate of events. Here, variance increases linearly with the mean.   
 With the log link function : $log(\lambda_i) = \alpha + \beta_iX_i + \varepsilon_{i}$  
 with :   
