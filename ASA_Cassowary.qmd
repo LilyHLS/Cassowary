@@ -483,7 +483,7 @@ These types of graphs are usually typical of a **periodic phenomenon**, also kno
 
 This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
 
-### Generalized Linears Models with Poisson Distribution
+### GLM with Poisson Distribution
 
 As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function ().      
 $Sightings$ ~ $P(\lambda)$, with $\lambda$, the expectation and variance rate of events. Here, variance increases linearly with the mean.   
@@ -536,7 +536,7 @@ sum(E1^2) / (N - p)
 
 Here, the Pearson residuals are way above 1, so there is overdispersion.
 
-### Generalized Linears Model with Negative Binomial Distribution
+### GLM with Negative Binomial Distribution
 To account for the overdispersion of the residuals, we switch to a GLM with a **Negative binomial** distribution, with a log link function. 
 $Sightings$ ~ $NB(\mu, \phi)$, with $\mu$ the mean of the distribution, and $\phi$ the dispersion parameters.  
 With the log link function : $log(\mu_i) = \alpha + \beta_iX_i + \varepsilon_{i} = \eta$    
@@ -701,6 +701,8 @@ ggplot(gwr_signif_all,
   theme_bw() +
   ggtitle("Cartes locales des coefficients GWR (Poisson ou NegBin)")
 ```
+
+## Discussion
 
 # Mortality of cassowary
 
@@ -868,24 +870,31 @@ summary(glm_nb_strikes)
 ```{r}
 glm <- stepAIC(glm_nb_strikes, direction = "backward") 
 ```
+With the step AIC we choose the best model. We keep the one with the three variables `LogSightings`, `Dfruit` and `Total_Road` even if the last two variables are not significant. The residuals respect the assumption.
 
 ```{r}
 glm_nb_strikes <- glm.nb(Strikes ~ scale(Total_Road)  + scale(Dfruit) + LogSightings,data = cassowary)
 summary(glm_nb_strikes)
 ```
 
+-   **Overdispersion check :**   
 ```{r}
 simresnb <- simulateResiduals(glm_nb_strikes)
 testDispersion(simresnb)
 plot(simulateResiduals(glm_nb_strikes))
 testZeroInflation(simresnb)
 ```
-
 With the negative binomial distribution, their is no more zero inflation. Their is no more overfitting in the residuals.
 
+-   **Spatial autocorrelation check :**\
+    Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test.
+```{r}
+testSpatialAutocorrelation(simulateResiduals(glm_nb_strikes), 
+                           x = cassowary$longitude, y = cassowary$latitude)
+```
+As before, we have spatial autocorrelation. To take this spatial dependence into account, we would need to follow a similar approach to that used in model 1, using a GWR model. However, as the distribution of strikings is not Gaussian, we will encounter the same limitations as with the functions developed previously. 
 
-With the step AIC we choose the best model. We keep the one with the three variables `LogSightings`, `Dfruit` and `Total_Road` even if the last two variables are not significant. The residuals respect the assumption.
-
+## Discussion
 implication for conservation/management ? --\> barrières ? passages à faune ? éloigner la route de la rainforest ?
 
 Other discussion possibility : we don't know if the strikes are independant or if some of them where counted several times. + résultats potentiellement biaisés si les citoyens ne s'enfoncent pas bcp dans la forêt et restent proches de la route
