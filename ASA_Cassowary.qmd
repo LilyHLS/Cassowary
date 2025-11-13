@@ -80,7 +80,7 @@ library(tidyverse) #for data cleaning, ordering
 library(ggplot2)
 library(MASS)
 # Spatial analysis 
-#library(geoR) #for spatial object to perform geostatistic
+library(geoR) #for spatial object to perform geostatistic
 library(sp)
 library(sf) #deal with spatial data
 library(pgirmess) #for spatial correlogram
@@ -89,7 +89,7 @@ library(ade4) #used for plotting spatial data
 library(spatialreg) #used for spatial data modelling
 library(spgwr) #to run geographically weighted regression
 library(dplyr)
-#library(mapview) # maps with openstreetMa
+library(mapview) # maps with openstreetMa
 library(corrplot) #correlation plot
 library(effects) # ploter les effets des variables
 ```
@@ -488,46 +488,48 @@ Since some explanatory variables had different scales, we scaled them (*scale* f
 
 Adele : I studied `Residential.01` and `Fruit.01` as qualitative in data exploration,
 
-Idée de modèle complet pour Poisson : 
 
 ```{r}
-glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P, data = cassowary, family=poisson(link="log"))
+glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P, 
+                data = cassowary, 
+                family=poisson(link="log"))
+summary(glm_pois)
+AIC(glm_pois)
 ```
 
 ```{r}
-# Avec interaction 
-# glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + 
-#                   Residential.01 + Fruit.01 + Rainforest.P:Fruit.01 +
-#                   Rainforest.P:Residential.01 + Residential.P:Fruit.01 + 
-#                   Fruit.P:Residential.01, 
-#                 data = cassowary, family = poisson(link="log"))
-
 glm_pois <- glm(Sightings ~ Rainforest.P + Residential.P + Fruit.P + 
                   Residential.01 + Fruit.01 + scale(Total_Road, scale = F) + 
                   scale(Dresid, scale = F) + scale(Dfruit, scale = F), 
                 data = cassowary, family = poisson(link="log"))
 drop1(glm_pois,test="Chi")
-summary(glm_pois)
-AIC(glm_pois)
 ```
 
 -   **Overdispersion check (scale parameter calculation) :**    
 *Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
-
 ```{r}
+simout <- simulateResiduals(fittedModel = glm_pois, plot = F)
+plot(simout)
+```
+Here, there is overdispersion, it can be due to outliers, model misfit, missing interactions and zero-inflation.
 
-8807.7/250 #ratio residual deviance / ddl : check of surdispersion
+Ratio residual deviance / ddl $\phi$ : 
+It allows us to estimate whether the actual variance of the observations is not too far from the theoretical variance :
+$ \phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}$   
+If this ratio is greater than 1, then there is overdispersion. It is based on log-likelihood and is less sensitive to extreme points.
+```{r}
+8807.7/250
+```
+Here, there is overdispersion.   
 
+Pearson residuals : 
+```{r}
 E1 <- resid(glm_pois, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
 p  <- length(coef(glm_pois))
 sum(E1^2) / (N - p)
-
-simout <- simulateResiduals(fittedModel = glm_pois, plot = F)
-plot(simout)
 ```
-
-Here, the Pearson residuals are way above 1, so there is overdispersion which can be due to outliers, model misfit, missing interactions and zero-inflation.
+Here, the Pearson residuals are way above 1, so there is overdispersion.
 
 ### Negative Binomial Distribution
 To account for the overdispersion of the residuals, we switch to a **negative binomial model**, with a log link.
@@ -539,10 +541,13 @@ summary(glm_NB)
 
 Again, we check for overdispersion :
 
+-   Ratio residual deviance / ddl : 
 ```{r}
-173.55/250 #ratio residual deviance / ddl : check of surdispersion dans le cas d'un modèle de poisson
-#Le residual deviance / ddl est préféré pour vérifier la surdispersion, car il se base sur la log-vraisemblance/moins sensible aux points extrêmes.
+173.55/250
+```
+Here, the ratio < 1 : there is no overdispersion. 
 
+```{r}
 E1 <- resid(glm_NB, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
 p  <- length(coef(glm_NB))
@@ -594,13 +599,9 @@ plot(allEffects(glm_NB), ci.style = "bands")
 It shows the effects plotted on the scale of the linear predictor, but the vertical axis is labelled on the response scale. This preserves the linear structure of the model while permitting interpretation on what is usually a more familiar scale (ref)
 
 ## Geostatistical model GWR
-
-We are now interested in the relationship that could occur between `Sightings` and the explanatory variables, taking into account the spatial effect.
+In the previous models, we have strong spatial autocorrelation. The GWR model can allow us to take spatial dependence into account. 
 
 **GWR because of the non-stationarity** :
-
-autocorrélation spatiale positive très significative.
-
 We define the *SpatialPointsDataFrame* with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(y+1) transformation on the response variable and the ***gwr*** function for general linear models. 
 
 faut-il réétudier Sightings ? 
