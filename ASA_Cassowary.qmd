@@ -112,7 +112,9 @@ There is no NA values in our data set
 
 ## Data exploration
 
+
 ### Variable distribution
+
 
 #### Distribution of the response variable Sightings $Y$ {.unnumbered}
 
@@ -483,7 +485,27 @@ These types of graphs are usually typical of a **periodic phenomenon**, also kno
 
 This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
 
+```{r}
+#| label: correlograms
+#| fig-cap: "Correlograms for environmental variables"
+
+plot(correlog(cassowary[,2:3],cassowary$Sightings,method="Moran",nbclass=12),main="Correlogram of Sightings")
+abline(h = 0, lty = 2)
+plot(correlog(cassowary[,2:3],cassowary$Rainforest.P,method="Moran",nbclass=12),main="Correlogram of Rainforest proportion")
+abline(h = 0, lty = 2)
+plot(correlog(cassowary[,2:3],cassowary$Residential.P,method="Moran",nbclass=12),main="Correlogram of Proportion of residential area")
+abline(h = 0, lty = 2)
+plot(correlog(cassowary[,2:3],cassowary$Residential.P,method="Moran",nbclass=12),main="Correlogram of Proportion of fruit crop")
+abline(h = 0, lty = 2)
+plot(correlog(cassowary[,2:3],cassowary$Total_Road,method="Moran",nbclass=12),main="Correlogram of the length of the road")
+abline(h = 0, lty = 2)
+```
+
+These correlograms are based on Moran's index. High values are positively correlated with each other. The red dots are significant correlations. Most variables show autocorrelation up to 7 km.
+
 ### GLM with Poisson Distribution
+
+### Generalized Linears Models with Poisson Distribution
 
 As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function (@mohammed2025spatial).      
 $Sightings$ ~ $P(\lambda)$, with $\lambda$, the expectation and variance rate of events. Here, variance increases linearly with the mean.   
@@ -505,8 +527,9 @@ summary(glm_pois)
 AIC(glm_pois)
 ```
 
--   **Overdispersion check (scale parameter calculation) :**    
-*Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
+-   **Overdispersion check (scale parameter calculation) :**\
+    *Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models.*
+
 ```{r}
 simout <- simulateResiduals(fittedModel = glm_pois, plot = F)
 plot(simout)
@@ -517,6 +540,7 @@ Here, there is overdispersion, it can be due to outliers, model misfit, missing 
 Ratio residual deviance / ddl $\phi$ : 
 It allows us to estimate whether the actual variance of the observations is not too far from the theoretical variance :
 $\phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}$   
+
 If this ratio is greater than 1, then there is overdispersion. It is based on log-likelihood and is less sensitive to extreme points.
 
 ```{r}
@@ -546,6 +570,7 @@ with :
 -   $\varepsilon$ the residuals,   
 -   $X_i$ the independent variables 
 Here, we model $log(\mu_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \varepsilon_{i}$ 
+
 ```{r}
 glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P, 
                  data = cassowary)
@@ -555,6 +580,7 @@ summary(glm_NB)
 
 -   **Overdispersion check (scale parameter calculation) :**    
 Ratio residual deviance / ddl : 
+
 ```{r}
 173.55/250
 ```
@@ -630,6 +656,7 @@ faut-il réétudier Sightings ?
 This leads to make the distribution of the response closer to a Gaussian, allowing the use of classical GWR (gwr) on a linear model.
 
 remettre le modèle lm ? Vérifier la normalité des résidus de la transformation. Vérifier la corrélation spatiale des résidus (Moran, DHARMa si possible). Vérifier l’hétéroscédasticité
+
 
 ```{r}
 geocass <- SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
@@ -895,6 +922,7 @@ testSpatialAutocorrelation(simulateResiduals(glm_nb_strikes),
 As before, we have spatial autocorrelation. To take this spatial dependence into account, we would need to follow a similar approach to that used in model 1, using a GWR model. However, as the distribution of strikings is not Gaussian, we will encounter the same limitations as with the functions developed previously. 
 
 ## Discussion
+
 implication for conservation/management ? --\> barrières ? passages à faune ? éloigner la route de la rainforest ?
 
 Other discussion possibility : we don't know if the strikes are independant or if some of them where counted several times. + résultats potentiellement biaisés si les citoyens ne s'enfoncent pas bcp dans la forêt et restent proches de la route
