@@ -11,6 +11,7 @@ format:
     code-fold: true
     bibliography: references.bib
     embed-resources: true
+    toc-depth: 4
     theme: cosmo
     highlight-style: pygments
     fig.align: center
@@ -94,7 +95,7 @@ library(corrplot) #correlation plot
 library(effects) # ploter les effets des variables
 ```
 
-# Data exploration
+# Data
 
 ```{r data importation}
 cassowary <- read.table("data_cassowary.txt", h = T)
@@ -108,9 +109,10 @@ colSums(is.na(cassowary))
 
 There is no NA values in our data set
 
-## Abundance of the cassowary
+# Abundance of the cassowary
+## Data exploration
 
-### Distribution of variables
+### Variable distribution
 
 #### Distribution of the response variable Sightings $Y$  {-}
 
@@ -184,7 +186,7 @@ We assume that the environmental variables that can influence cassowary abundanc
 
 env <- cassowary %>%
   dplyr::select(Rainforest.P, Residential.P, Fruit.P, Other.P, Total_Road, 
-                Residential.01, Fruit.01, Dresid, Dfruit)
+                Dresid, Dfruit)
 
 par(mfrow = c(2, 2))
 for(i in 1:ncol(env)){
@@ -217,7 +219,7 @@ summary(cassowary$Fruit.01)
 There is a good balance between presence and absence for each variable.
 However, studying the effect of presence/absence of fruit crop in cells and the effect of proportion of fruit crop in cell in the same model can be redundant. The same can be told for presence/absence of residential area and proportion of residential area within the grid.
 
-### Potential relationships between response variable (Sightings) and explanatory variables
+#### Potential relationships between response variable (Sightings) and explanatory variables
 ```{r}
 par(mfrow=c(2, 2))
 
@@ -267,6 +269,7 @@ corrplot(correlation, type = "upper", method = "number")
 ```
 
 This @fig-corrplot shows a negative correlation between the proportions of different habitats per cell (notably -0.82 between the proportion of rainforest `Rainforest.P` and that of other habitats `Other.P`). This result was expected since the habitat proportion variables per cell are constructed together. 
+We also have strong correlations between variables made from the same information : i.e `Residential.01` (presence /absence of residential area),`Residential.P` (proportion of residential area in the grid), and `Dresid` (distance of the road to residential area), or `Fruit.P`, `Fruit.01` and `Dfruit`.
 
 -   **Collinearity between categorical and continuous environmental variables :** 
 ```{r}
@@ -330,8 +333,7 @@ points(Sightings[Residential.01 == "0"] ~ Rainforest.P[Residential.01 == "0"],
 points(Sightings[Residential.01 == "1"] ~ Rainforest.P[Residential.01 == "1"],
        pch = 17, col = 'darkorchid', data = cassowary) 
 
-# Interactions between Residential.P & Fruit.01
-
+# Interactions between Residential.P & Fruit.01 --------------------------------
 plot(Sightings ~ Residential.P, type = 'n',
      ylab = "Sightings", xlab = "Proportion of residential area", data = cassowary)
 points(Sightings[Fruit.01 == "0"] ~ Residential.P[Fruit.01 == "0"],
@@ -410,9 +412,9 @@ With these observations and the collinearity observed before, we can keep `Rainf
 
 ********************************************************************************
 
-# Statistical Analysis : Sightings ~ Environmental variables
+## Statistical Analysis
 
-## Spatial dependency: semi-variogramm
+### Spatial dependency: semi-variogramm
 
 **a.) Without any modification of the data:**
 
@@ -478,8 +480,7 @@ These types of graphs are usually typical of a **periodic phenomenon**, also kno
 
 This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
 
-## Generalized Linears Models
-### Poisson Distribution
+### Generalized Linears Models with Poisson Distribution
 As we have count data, we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function.  
 
 Some informations are redundant and correlated (@fig-corrplot) : we remove the variables `Residential.01` and `Fruit.01` (redundant with `Residential.P` and `Fruit.P`) and `Other.P` (correlated to `Rainforest.P`).
@@ -531,7 +532,7 @@ sum(E1^2) / (N - p)
 ```
 Here, the Pearson residuals are way above 1, so there is overdispersion.
 
-### Negative Binomial Distribution
+### Generalized Linears Models with Negative Binomial Distribution
 To account for the overdispersion of the residuals, we switch to a **negative binomial model**, with a log link.
 ```{r}
 glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P, data = cassowary)
@@ -589,7 +590,7 @@ For each point, we have a local Moran index.
 Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. We have significant positive autocorrelation (p-value \< 2.2e-16) : this means that two observations that are close together are more likely to be similar than two observations that are far apart.
 In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between `Sightings` and the explanatory variables.
 
-## First visualisation of result 
+-   **First visualisation of result :**    
 Even if our model is not correct because of spatial autocorrelation, we can still visualize the predictors of the Negative Binomial GLM
 ```{r}
 #|label: plot_alleffects
@@ -598,7 +599,7 @@ plot(allEffects(glm_NB), ci.style = "bands")
 ```
 It shows the effects plotted on the scale of the linear predictor, but the vertical axis is labelled on the response scale. This preserves the linear structure of the model while permitting interpretation on what is usually a more familiar scale (ref)
 
-## Geostatistical model GWR
+### Geostatistical model GWR
 In the previous models, we have strong spatial autocorrelation. The GWR model can allow us to take spatial dependence into account. 
 
 **GWR because of the non-stationarity** :
@@ -610,10 +611,10 @@ faut-il réétudier Sightings ?
 ```
 This leads to make the distribution of the response closer to a Gaussian, allowing the use of classical GWR (gwr) on a linear model.
 
-#remettre le modèle lm ?
-#Vérifier la normalité des résidus de la transformation.
-#Vérifier la corrélation spatiale des résidus (Moran, DHARMa si possible).
-#Vérifier l’hétéroscédasticité 
+remettre le modèle lm ?
+Vérifier la normalité des résidus de la transformation.
+Vérifier la corrélation spatiale des résidus (Moran, DHARMa si possible).
+Vérifier l’hétéroscédasticité 
 
 
 ```{r}
