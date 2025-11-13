@@ -206,7 +206,7 @@ However, studying the effect of presence/absence of fruit crop in cells and the 
 
 ### Potential relationships between response variable (Sightings) and explanatory variables
 ```{r}
-par(mfrow=c(2,2))
+par(mfrow=c(2, 2))
 
 # Rainforest.P
 plot(cassowary$Sightings ~ cassowary$Rainforest.P, pch = 16,
@@ -224,9 +224,11 @@ plot(cassowary$Sightings ~ cassowary$Fruit.P, pch = 16,
 plot(cassowary$Sightings ~ cassowary$Other.P, pch = 16, 
      col = 'olivedrab4', xlab = 'Proportion of wetlands and pasture', 
      ylab = 'Sightings')
+```
 
 
-
+```{r}
+par(mfrow = c(2, 1))
 #Residential.01 
 boxplot(cassowary$Sightings ~ cassowary$Residential.01, pch = 16,
         col = 'olivedrab4', xlab = 'presence/absence of residential area',
@@ -254,7 +256,10 @@ This @fig-corrplot shows a negative correlation between the proportions of diffe
 
 -   **Collinearity between categorical and continuous environmental variables :** 
 ```{r}
-par(mfrow=c(4,2))
+#| label: fig-colinea_fruit01
+#| fig-cap : "Collinearity between categorical and continuous environmental variables"
+
+par(mfrow=c(2,2))
 
 # Rainforest.P et Fruit.01
 boxplot(cassowary$Rainforest.P ~ cassowary$Fruit.01, varwidth = TRUE,
@@ -271,6 +276,7 @@ boxplot(cassowary$Fruit.P ~ cassowary$Fruit.01, varwidth = TRUE,
         ylab = "Proportion of fruit crop",
         xlab = "presence/absence of fruit crop", col = 'grey', main = "")
 
+par(mfrow = c(2, 2))
 # Rainforest.P et Residential.01
 boxplot(cassowary$Rainforest.P ~ cassowary$Residential.01, varwidth = TRUE,
         ylab = "Proportion de Rainforest",
@@ -465,12 +471,13 @@ on construit ensuite le modèle avec Negative Binomial
 puis on sélectionne nos variables de notre modèle avec AIC par exemple 
 
 ### Poisson Distribution
-Since we 
-Maybe, remove the variables `Residential.01` and `Fruit.01` because of redundant information with the variables `Residential.P` and `Fruit.P` ? Transform the variables `Residential.01` and `Fruit.01` into qualitative ones ? Yes : maybe before the semi-variogram plot
-Adele : I studied `Residential.01` and `Fruit.01` as qualitative in data exploration, and also : `Residential.01` and `Fruit.01` are redundant and correlated to `Residential.P` and `Fruit.P` so we can just keep `Residential.P` and `Fruit.P`. 
-We can also remove `Other.P` : too correlated to `Rainforest.P`
+As we have count data, we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function.  
 
-Idée de modèle complet pour Poisson avec interactions (je ne sais pas si on met les interactions si ça a vraiment un sens) : 
+Some informations are redundant and correlated (@fig-corrplot) : we remove the variables `Residential.01` and `Fruit.01` (redundant with `Residential.P` and `Fruit.P`) and `Other.P` (correlated to `Rainforest.P`).
+
+Since some explanatory variables had different scales, we scaled them (*scale* function). However, in order to be able to compare the effects of the variables with each other, we only centred them (*scale = F)* without reducing them.
+
+Adele : I studied `Residential.01` and `Fruit.01` as qualitative in data exploration,
 
 ```{r}
 # Avec interaction 
@@ -576,10 +583,10 @@ testSpatialAutocorrelation(simulateResiduals(glm_NB),
 ```
 
 For each point, we have a local Moran index.   
-Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. We have positive autocorrelation : this means that two observations that are close together are more likely to be similar than two observations that are far apart.
-The distance based autocorrelation of the residuals is highly significative (p-value \< 2.2e-16). In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between *Sightings* and the explanatory variables.
+Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. We have significant positive autocorrelation (p-value \< 2.2e-16) : this means that two observations that are close together are more likely to be similar than two observations that are far apart.
+In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between *Sightings* and the explanatory variables.
 
-## Geostatistical model
+## Geostatistical model GWR
 
 We are now interested in the relationship that could occur between *Sightings* and the explanatory variables, taking into account the spatial effect.
 
@@ -627,17 +634,9 @@ gwr_signif_all <- lapply(vars, function(v) {
   classe_p <- ifelse(p_val < 0.05, "p<0.05", "p>0.05")
   
   # Data frame local
-  data.frame(
-    variable = v,
-    x = coordinates(geocass)[,1],
-    y = coordinates(geocass)[,2],
-    beta = beta,
-    se = se,
-    t = t_val,
-    p = p_val,
-    classe_beta = classe_beta,
-    classe_p = classe_p
-  )
+  data.frame(variable = v, x = coordinates(geocass)[,1], y = coordinates(geocass)[,2],
+    beta = beta, se = se, t = t_val, p = p_val,
+    classe_beta = classe_beta, classe_p = classe_p)
 }) %>% bind_rows()
 ```
 
@@ -664,10 +663,6 @@ ggplot(gwr_signif_all,
   theme_bw() +
   ggtitle("Cartes locales des coefficients GWR (Poisson ou NegBin)")
 ```
-
-### Study limitations
-
-However, our results should be treated with caution as they are based on citizen science data. Furthermore, in the initial study (@dwyer_using_2016), each cassowary sighting and strike is dated, allowing for temporal analyses that take sampling bias into account.
 
 # Mortality of cassowary
 
@@ -793,7 +788,7 @@ plot(simulateResiduals(glm_pois_strikes))
 testZeroInflation(glm_pois_strikes)
 ```
 
-Residuals are overfitting, probably cause to 0 inflation or outliers in the Poisson distribution of our $Y$ variable. As we did for the first question, we will switch to a Negative Binomial model. To test the 0 inflation we also apply the function implemented in DHARMa package and the result of the test is significant.
+Residuals are overfitting, probably cause to 0 inflation or outliers in the Poisson distribution of our $Y$ variable. As we did for the first question, we will switch to a Negative Binomial model. To test the zero-inflation, we also apply the function implemented in DHARMa package and the result of the test is significant.
 
 ```{r glm strikes nb}
 glm_NB_strikes <- glm.nb(Strikes ~ Total_Road + Dresid + Dfruit, 
@@ -826,3 +821,7 @@ implication for conservation/management ? --> barrières ? passages à faune ? �
 
 Other discussion possibility : we don't know if the strikes are independant or if some of them where counted several times.
 + résultats potentiellement biaisés si les citoyens ne s'enfoncent pas bcp dans la forêt et restent proches de la route
+
+# Study limitations
+
+However, our results should be treated with caution as they are based on citizen science data. Furthermore, in the initial study (@dwyer_using_2016), each cassowary sighting and strike is dated, allowing for temporal analyses that take sampling bias into account.
