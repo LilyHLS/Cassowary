@@ -40,33 +40,19 @@ Using this data, compiled with the habitat variables and the distance of road lo
 (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and traffic strikes that have occurred are geo-referenced in 1 km grid cells. (from @dwyer_using_2016)
 
 ::: {#tbl-descrva}
-| Variable name                           | Ecological reference                                        |
+| Variable name | Ecological reference |
 |------------------------------------|------------------------------------|
-| `Rainforest.P` (quantitative continue)  | proportion of rainforest within the grid                    |
-| `Residential.P` (quantitative continue) | proportion of residential area within the grid              |
-| `Fruit.P` (quantitative continue)       | proportion of fruit crop within the grid                    |
-| `Other.P` (quantitative continue)       | proportion of other area (pasture, wetland) within the grid |
-| `Total_Road` (quantitative continue)    | length of road within the grid                              |
-| `Sightings` (quantitative counting)     | visual contact of cassowary                                 |
-| `Strikes` (quantitative counting)       | mortality of cassowary due to road traffic                  |
-| `Residential.01` (quantitative binary)  | presence /absence of residential area                       |
-| `Fruit.01` (quantitative binary)        | presence /absence of fruit crop                             |
-| `Dresid` (quantitative continue)        | distance of the road to residential area                    |
-| `Dfruit` (quantitative continue)        | distance of the road to fruit crop area                     |
-
-| Variable name                           | Ecological reference                                        |
-|------------------------------------|------------------------------------|
-| `Rainforest.P` (quantitative continue)  | proportion of rainforest within the grid                    |
-| `Residential.P` (quantitative continue) | proportion of residential area within the grid              |
-| `Fruit.P` (quantitative continue)       | proportion of fruit crop within the grid                    |
-| `Other.P` (quantitative continue)       | proportion of other area (pasture, wetland) within the grid |
-| `Total_Road` (quantitative continue)    | length of road within the grid                              |
-| `Sightings` (quantitative counting)     | visual contact of cassowary                                 |
-| `Strikes` (quantitative counting)       | mortality of cassowary due to road traffic                  |
-| `Residential.01` (quantitative binary)  | presence /absence of residential area                       |
-| `Fruit.01` (quantitative binary)        | presence /absence of fruit crop                             |
-| `Dresid` (quantitative continue)        | distance of the road to residential area                    |
-| `Dfruit` (quantitative continue)        | distance of the road to fruit crop area                     |
+| `Rainforest.P` (quantitative continue) | proportion of rainforest within the grid |
+| `Residential.P` (quantitative continue) | proportion of residential area within the grid |
+| `Fruit.P` (quantitative continue) | proportion of fruit crop within the grid |
+| `Other.P` (quantitative continue) | proportion of other area (pasture, wetland) within the grid |
+| `Total_Road` (quantitative continue) | length of road within the grid |
+| `Sightings` (quantitative counting) | visual contact of cassowary |
+| `Strikes` (quantitative counting) | mortality of cassowary due to road traffic |
+| `Residential.01` (quantitative binary) | presence /absence of residential area |
+| `Fruit.01` (quantitative binary) | presence /absence of fruit crop |
+| `Dresid` (quantitative continue) | distance of the road to residential area |
+| `Dfruit` (quantitative continue) | distance of the road to fruit crop area |
 
 Table of the cassowary variables and their ecological meaning.
 :::
@@ -77,10 +63,7 @@ We note that `Sightings` doesn't represent actual abundances of Cassowaries, but
 
 In this study, we have several variables linked to the environment as well as the latitude and longitude of each cell (@descrva). Close cells may have similar environmental conditions and that may influence the count of cassowaries. Cassowaries can probably move from a cell to another cell nearby, this can also influence `Sightings`. There are repeated counts in some cells : they were carried out over several years and each year, several citizens came to count in the same patches. Therefore, it is possible that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test for spatial autocorrelation.
 
-**Hypothesis:** *We assume that southern cassowary is mainly distributed near its natural habitat (Rainforest) or in areas where food is available (Fruit crop). We expect that high proportions of rainforest and fruit crops are associated with greatest cassowary abundance.*\
-*We also assume that traffic strike occur when (the road is at a low distance from the centroid of the grid cell) and that risk is higher when the road connects to favorable habitat.*
-
-**Hypothesis:** *We assume that southern cassowary is mainly distributed near its natural habitat (Rainforest) or in areas where food is available (Fruit crop). We expect that high proportions of rainforest and fruit crops are associated with greatest cassowary abundance.*\
+**Hypothesis:** *We assume that southern cassowary is mainly distributed near its natural habitat (rainforest) or in areas where food is available (Fruit crop). We expect that high proportions of rainforest and fruit crops are associated with greatest cassowary abundance.*\
 *We also assume that traffic strike is higher when the road connects to favorable habitat, with a low distance between fruit crops and road.*
 
 ```{r setup, include=FALSE}
@@ -988,7 +971,7 @@ ggplot(gwr_signif_all,
   ggtitle("Local Maps of GWR coefficients (Sightings log transformed)")
 ```
 
-## Results 
+## Results
 
 The relationship between `Sightings` and `Fruit.P`, `Residential.P` and `Total_Road` mostly translates very well significantly to the Northeast whereas the significant effect of `Rainforest.P` is more widespread spatially. Where the effects of the variables are significant, they are also mainly positive. Even if the interpretation on the log scale is not very intuitive, we can still say that locally the greater the proportion of fruit crops, residential areas, rainforest and the larger the total road area within the grid, the greater the abundance of cassowary. The variables that seem to have the most impact (greater coefficients) on the abundance of cassowary are `Fruit.P`, `Residential.P` and `Rainforest.P.` These results validate the hypothesis made when including the explanatory variables into the first model : the abundance of cassowary is mainly regulated by the proportion of fruit crop available because it represents a source of food and the proportion of rainforest because cassowary mostly need forest as a natural habitat. The results we have for the effects of proportion of residential area and total road rather differ from the assumptions we made : this could be due to an observation bias we usually find in participative science studies. In fact, areas more populated by humans are also those where humans are more likely to report the presence of cassowary because humans explore less the forest or fruit crops where cassowary abundance is directly linked to the ecology of the species.
 
