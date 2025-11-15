@@ -63,7 +63,7 @@ We note that `Sightings` doesn't represent actual abundances of Cassowaries, but
 
 In this study, we have several variables linked to the environment as well as the latitude and longitude of each cell (@descrva). Close cells may have similar environmental conditions and that may influence the count of cassowaries. Cassowaries can probably move from a cell to another cell nearby, this can also influence `Sightings`. There are repeated counts in some cells : they were carried out over several years and each year, several citizens came to count in the same patches. Therefore, it is possible that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test for spatial autocorrelation.
 
-**Hypothesis:** *We assume that southern cassowary is mainly distributed near its natural habitat (rainforest) or in areas where food is available (Fruit crop). We expect that high proportions of rainforest and fruit crops are associated with greatest cassowary abundance.*\
+**Hypothesis:** *We assume that southern cassowary is mainly distributed near its natural habitat (rainforest) or in areas where food is available (fruit crop). We expect that high proportions of rainforest and fruit crops are associated with greatest cassowary abundance.*\
 *We also assume that traffic strike is higher when the road connects to favorable habitat, with a low distance between fruit crops and road.*
 
 ```{r setup, include=FALSE}
@@ -114,7 +114,7 @@ There is no NA values in our data set
 
 ### Variable distribution
 
-#### Distribution of the response variable Sightings {-}
+#### Distribution of the response variable Sightings {.unnumbered}
 
 ```{r data response variable abundance}
 #| label: fig-sighting_descr
@@ -164,7 +164,7 @@ table(cassowary$Sightings)
 prop.table(table(cassowary$Sightings)) * 100
 ```
 
-`Sightings` were obtained thanks to counting : we will probably use a Generalized Linear Model using Poisson distribution to study it.
+`Sightings` were obtained thanks to counting : we will first use a Generalized Linear Model with a Poisson distribution to study it.
 
 65% of `Y` values are zeros : it represents a lot of zeros and it may have an influence on the model. The maximum value is really high : 572. The large dispersion of values and the amount of zeros can then influence the model and the way we will formulate it to study `Sightings`.
 
@@ -172,7 +172,7 @@ Cassowaries are rarely and higlty territorial, with approximativly 1 individual/
 
 The data will be discussed because an overcounting by citizens can be possible. Sometimes individuals can be double-counted in the context of a citizen science program. We could then attempt to study `Y` as it is and then limit the counts in certain cells to limit overdispersion and compare different methods.
 
-#### Distribution of environmental variables {-}
+#### Distribution of environmental variables {.unnumbered}
 
 We assume that the environmental variables that can influence cassowary abundance are the abundance of a certain type of habitat and the presence/absence of these habitats in cells where cassowaries are counted. We also test if there is a correlation with distances.
 
@@ -475,17 +475,13 @@ With these observations and the collinearity observed before, we can keep `Rainf
 
 ## Statistical Analysis
 
-### Spatial dependency: semi-variogramm
-
-**a.) Without any modification of the data:**
+### Spatial dependency: semi-variogramm & correlogram (should we keep semi-variogramm?)
 
 First, we have to investigate if there is spatial dependency in the variables and because this is a continuous process, we are going to visualize the semi-variograms. For this first model, related to the first problematic **"Which factors influence the southern cassowary abundance?"** we do not take into account `Strikes` and the variables directly linked to the road (`Total_Road`, `Dresid`&`Dfruit`).
 
 ```{r}
 geo_sight <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),
                                                data.frame(cassowary$Sightings)))
-#geo_residb <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Residential.01)))
-#geo_fruitb <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),data.frame(cassowary$Fruit.01)))
 geo_rainp <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),
                                                data.frame(cassowary$Rainforest.P)))
 geo_residp <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),
@@ -526,8 +522,6 @@ plot(semivar_sight, main = "Sightings of cassowary")
 
 par(mfrow = c(2, 2))
 plot(semivar_rain, main = "Proportion of rainforest")
-#plot(semivar_residb, main = "Presence/absence of residential area")
-#plot(semivar_fruitb, main = "Presence/absence of fruit crop")
 plot(semivar_residp, main = "Proportion of residential area")
 plot(semivar_fruitp, main = "Proportion of fruit crop")
 plot(semivar_otherp, main = "Proportion of other")
@@ -570,6 +564,7 @@ abline(h = 0, lty = 2)
 These correlograms are based on Moran's index. High values are positively correlated with each other. The red dots are significant correlations. Most variables show autocorrelation up to 7 km.
 
 ### GLM with Poisson Distribution
+
 As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function (@mohammed2025spatial).\
 $Sightings$ \~ $P(\lambda)$, with $\lambda$, the expectation and variance rate of events. Here, variance increases linearly with the mean.\
 With the log link function : $log(\lambda_i) = \alpha + \beta_iX_i + \varepsilon_{i}$\
@@ -577,9 +572,9 @@ with :\
 - $\alpha$ the intercept,\
 - $\beta$ the coefficient represnting the effect of each independant variables on $\lambda$,\
 - $\varepsilon$ the residuals,\
-- $X_i$ the independent variables\   
-Here, we model :   
-$log(\lambda_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \varepsilon_{i}$
+- $X_i$ the independent variables \
+Here, we model :\
+$log(\lambda_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \beta_4TotalRoad +\varepsilon_{i}$
 
 Some informations are redundant and correlated (@fig-corrplot) : we remove the variables `Residential.01` and `Fruit.01` (redundant with `Residential.P` and `Fruit.P`) and `Other.P` (correlated to `Rainforest.P`).
 
@@ -601,28 +596,36 @@ plot(simout)
 Here, there is overdispersion, it can be due to outliers, model misfit, missing interactions and zero-inflation.
 
 We can take a closer look at the problems with the model (zero-inflation and overdispersion) :
+
 ```{r}
 testDispersion(simout)
 testZeroInflation(simout)
 ```
+
 Dharma test shows also zero-inflation (a situation when more zeros appear in the observation than expected under the fitted model).
 
--   Ratio residual deviance / ddl $\phi$ :   
-It allows us to estimate whether the actual variance of the observations is not too far from the theoretical variance : $\phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}$    
-If this ratio is greater than 1, then there is overdispersion. It is based on log-likelihood and is less sensitive to extreme points.
+-   Ratio residual deviance / ddl $\phi$ :\
+    It allows us to estimate whether the actual variance of the observations is not too far from the theoretical variance : $\phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}$\
+    If this ratio is greater than 1, then there is overdispersion. It is based on log-likelihood and is less sensitive to extreme points.
+
+Should we keep this part? Does Dharma is enough? I haven't done that for the mortality model
+
 ```{r}
 #based on the results of glm_pois1
 8807.7/250
 ```
+
 Here, there is overdispersion.
 
 -   Pearson residuals :
+
 ```{r}
 E1 <- resid(glm_pois1, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
 p  <- length(coef(glm_pois1))
 sum(E1^2) / (N - p)
 ```
+
 Here, the Pearson residuals are way above 1, so there is overdispersion.
 
 ### GLM with Negative Binomial Distribution
@@ -633,7 +636,7 @@ with :\
 - $\alpha$ the intercept,\
 - $\beta$ the coefficient representing the effect of each independant variables on $\lambda$,\
 - $\varepsilon$ the residuals,\
-- $X_i$ the independent variables Here, we model $log(\mu_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \varepsilon_{i}$
+- $X_i$ the independent variables Here, we model $log(\mu_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \beta_4TotalRoad +\varepsilon_{i}$
 
 ```{r}
 glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Total_Road, data = cassowary)
@@ -650,6 +653,7 @@ summary(glm_NB)
 Here, the ratio \< 1 : there is no overdispersion.
 
 -   Residus de Pearson :
+
 ```{r}
 E1 <- resid(glm_NB, type = "pearson") # (Y - mu) / sqrt(mu)
 N  <- nrow(cassowary)
@@ -658,10 +662,12 @@ sum(E1^2) / (N - p)
 ```
 
 -   Dharma test :
+
 ```{r}
 simout_NB <- simulateResiduals(fittedModel = glm_NB, plot = F)
 plot(simout_NB)
 testZeroInflation(simout_NB)
+testDispersion(simout_NB)
 ```
 
 No more overdispersion : the negative binomial distribution seems appropriate in this case. If this had not been the case, we would have considered other distributions, such as the one that include zero-inflation (i.e. a situation when more zeros appear in the observation than expected under the fitted model).
@@ -678,7 +684,7 @@ plot(semivar_resid, main = "Semi-variogramme des résidus NB")
 We still have an abnormal semi variogram ??? A préciser
 
 -   **Spatial autocorrelation check :**\
-Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
+    Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
 
 ```{r}
 # Dharma procedure :
@@ -691,6 +697,7 @@ Here, the observed Moran's index is higher than the expected. This indicates a t
 
 -   **First visualisation of result :**\
     Even if our model is not correct because of spatial autocorrelation, we can still visualize the predictors of the Negative Binomial GLM.
+
 ```{r}
 #|label: plot_alleffects
 #|fig-cap: "Predictor effects on Sightings"
@@ -711,6 +718,7 @@ We define the *SpatialPointsDataFrame* with both variables and coordinates and w
 #### A study of log(Sightings + 1) as the response variable
 
 -   **Distribution of Y_1 = log(Sightings + 1)**
+
 ```{r Y1}
 cassowary$Y_1 = log(cassowary$Sightings + 1)
 
@@ -750,6 +758,7 @@ hist(cassowary$Y_1,
 qqnorm(cassowary$Y_1, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot") 
 qqline(cassowary$Y_1, col='red', lwd=2)
 ```
+
 Still a lot of zeros... Le log ne règle pas le problème des zéros.
 
 We try to fit the model with the sames variables as in the previous glm.
@@ -761,7 +770,8 @@ summary(try_linear)
 
 This leads to make the distribution of the response closer to a Gaussian, allowing the use of classical GWR (gwr) on a linear model.
 
--   **Residuals normality :**  
+-   **Residuals normality :**\
+
 ```{r ResidNorm, include=TRUE, fig.height=4, fig.width=6}
 par(mfrow=c(1,2))
 # Histogram
@@ -771,7 +781,8 @@ qqnorm(try_linear$residuals,pch=16,col='blue3',xlab='')
 qqline(try_linear$residuals,col='red',lwd=2)
 ```
 
--   **Homoscedasticity :**  
+-   **Homoscedasticity :**\
+
 ```{r Residhomo, include=TRUE, fig.height=3, fig.width=6}
 par(mfrow=c(1,3))
 
@@ -793,16 +804,20 @@ abline(h = 0)
 
 No comment...
 
--   **Spatial autocorrelation test :**  
+-   **Spatial autocorrelation test :**\
+
 ```{r}
 # Dharma procedure :
 testSpatialAutocorrelation(simulateResiduals(try_linear), 
                            x = cassowary$longitude, y = cassowary$latitude)
 ```
+
 Presence of spatial autocorrelation
 
 #### GWR Model
+
 To apply the **GWR model**, we have to define the SpatialPointsDataFrame with both variables and coordinates in an object called `geocass.` At this stage, we also optimize the bandwidth (a metric that represents a distance between points or the number of neighbors used in each regression) for the kernel function (neighborhood weighting function) and then we run the GWR model. The determination of the bandwith is actually based on the spatial autocorrelogram and most notably, the influence of the neighbors is weighted by a decreasing function of distance.
+
 ```{r}
 geocass <- SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
                                   data.frame(cassowary[,c("Rainforest.P","Residential.P","Fruit.P", "Total_Road", "Sightings")]))
@@ -915,15 +930,18 @@ ggplot(gwr_signif_all,
 
 ## Results
 
-The relationship between `Sightings` and `Fruit.P`, `Residential.P` and `Total_Road` is mostly significant in the north-east, whereas the significant effect of `Rainforest.P` is more widespread spatially. Where the effects of the variables are significant, they are mainly positive. Although the interpretation on the log scale is not very intuitive, we can conclude that, locally, the greater the proportion of fruit crops, residential areas and rainforest, and the larger the total road area within the grid, the greater the cassowary abundance.    
-The variables that seem to have the greatest impact (greatest coefficients) on the cassowary abundance are `Fruit.P`, `Residential.P` and `Rainforest.P.` These results validate the hypothesis made when the explanatory variables were included in the first model. Cassowary abundance is mainly regulated by the proportion of available fruit crop, because they represent a food source, and by the proportion of rainforest, because cassowaries mostly need forests as a natural habitats.   
+The relationship between `Sightings` and `Fruit.P`, `Residential.P` and `Total_Road` is mostly significant in the north-east, whereas the significant effect of `Rainforest.P` is more widespread spatially. Where the effects of the variables are significant, they are mainly positive. Although the interpretation on the log scale is not very intuitive, we can conclude that, locally, the greater the proportion of fruit crops, residential areas and rainforest, and the larger the total road area within the grid, the greater the cassowary abundance.\
+The variables that seem to have the greatest impact (greatest coefficients) on the cassowary abundance are `Fruit.P`, `Residential.P` and `Rainforest.P.` These results validate the hypothesis made when the explanatory variables were included in the first model. Cassowary abundance is mainly regulated by the proportion of available fruit crop, because they represent a food source, and by the proportion of rainforest, because cassowaries mostly need forests as a natural habitats.
 
 The results we obtained regarding the effects of the proportion of residential areas and the total length of roads differ considerably from our initial assumptions. This discrepancy could be attributed to the observation bias often encountered in participatory science studies. In fact, areas with a higher human population density are also those where people are more likely to report the presence of cassowaries, because people tend to explore the forest or fruit crops less, where cassowary abundance is directly linked to the species' ecology.
 
-# Mortality of cassowary   
-## Data exploration   
-### Distribution of variables  
-#### Distribution of the response variable Strikes {-}
+# Mortality of cassowary
+
+## Data exploration
+
+### Distribution of variables
+
+#### Distribution of the response variable Strikes {.unnumbered}
 
 ```{r data response variable mortality}
 #| label: fig-strikes_descr
@@ -977,7 +995,7 @@ Their is some outliers values in the strike distribution (@fig-strikes_descr). M
 
 The data will be discussed because an overcounting by citizens can be possible. Sometimes strikes can be double-counted in the context of a citizen science program.
 
-#### Distribution of environmental variables {-}
+#### Distribution of environmental variables {.unnumbered}
 
 We assume that all road-related variables influence cassowary strike mortality. As cassowaries have a territory of about 1km² we assume that their chances to encountering a road are high if they live close to one. We also include abundance in the model, as strike mortality may also depend on abundance. By using `Sightings`, we can do a log-transformation because there are outliers in the distribution of `Sightings`.
 
@@ -990,7 +1008,7 @@ cassowary$LogSightings <- log(cassowary$Sightings +1)
 #| fig-cap: "Distribution of strikes explain variables"
 
 road <- cassowary %>%
-  dplyr::select(Total_Road, Dresid, Dfruit, Sightings, LogSightings)
+  dplyr::select(Total_Road, Dresid, Dfruit, Sightings, LogSightings, Rainforest.P)
 
 par(mfrow = c(2, 2))
 for(i in 1:ncol(road)){
@@ -1034,9 +1052,14 @@ plot(cassowary$Strikes ~ cassowary$Sightings, pch = 16,
 plot(cassowary$Strikes ~ cassowary$LogSightings, pch = 16, 
      col = 'olivedrab4', xlab = 'Log Abundance', 
      ylab = 'Strikes')
+
+# Rainforest.P
+plot(cassowary$Strikes ~ cassowary$Rainforest.P, pch = 16, 
+     col = 'olivedrab4', xlab = 'Rain forest proportion', 
+     ylab = 'Strikes')
 ```
 
-It seems that their is an interaction between the `LogSightings` and `Strikes`.
+It seems that their is an interaction between the `LogSightings` and `Strikes` as well as `Rainforest.P`. We can also see a potential relation between `Strikes` and `Total_Road` when its appear to be above a length of 1km.
 
 ### Correlation between environmental variables $X$
 
@@ -1049,11 +1072,11 @@ corelation <- cor(road)
 corrplot(corelation, type = "upper", method = "number")
 ```
 
-There is a correlation between `Sightings` and `LogSightings` but we will just keep the log+1 transformation in the model.
+There is a correlation between `Sightings` and `LogSightings` but we will just keep the log+1 transformation in the model. Their is also a correlation between `Rainforest.P` and `LogSightings` but we can keep those variables in the model.
 
 ## Statistical Analysis
 
-### Spatial dependency 
+### Spatial dependency
 
 ```{r}
 #| label: fig-correlograms2
@@ -1071,12 +1094,16 @@ abline(h = 0, lty = 2)
 plot(correlog(cassowary[, 2:3], cassowary$Dfruit, method = "Moran", nbclass = 12),
      main = "Distance to the fruit crops")
 abline(h = 0, lty = 2)
-plot(correlog(cassowary[,2:3], cassowary$Sightings, method = "Moran", nbclass = 12),
-     main = "Sightings")
+plot(correlog(cassowary[,2:3], cassowary$LogSightings, method = "Moran", nbclass = 12),
+     main = "Log of the abundance")
+abline(h = 0, lty = 2)
+abline(h = 0, lty = 2)
+plot(correlog(cassowary[,2:3], cassowary$Rainforest.P, method = "Moran", nbclass = 12),
+     main = "Rainforest proportion")
 abline(h = 0, lty = 2)
 ```
 
-As for the first problematic, we analyse spatial dependency with correlograms based on Moran's index (@fig-correlograms2). The high values mean that dot are correlated with each other and the red one are significant correlation. For the `Strikes` and `Sightings` variables, their is the same correlogram because strikes can occur only if their is cassowary, and values are auto correlated until 7km that probably correspond the cassowaries re partition area.
+As for the first problematic, we analyse spatial dependency with correlograms based on Moran's index (@fig-correlograms2). The high values mean that dot are correlated with each other and the red one are significant correlation. For each variable, the values seems to be correlated until around 10 km, probably correspond the cassowaries repartition area in link with the limit of the rainforest.
 
 ### GLM with Poisson Distribution
 
@@ -1088,26 +1115,28 @@ with :\
 - $\beta$ the coefficient representing the effect of each independent variables on $\lambda$,\
 - $\varepsilon$ the residuals,\
 - $X_i$ the independent variables\
-Here, we model   
-$log(\lambda_i) = \alpha + \beta_1TotalRoad_i + \beta_2Dresid_i + \beta_3Dfruit_i + \beta4log(Sightings+1) +\beta \varepsilon_{i}$\
+Here, we model\
+$log(\lambda_i) = \alpha + \beta_1TotalRoad_i + \beta_2Dresid_i + \beta_3Dfruit_i + \beta4log(Sightings+1) + \beta_5Rainforest.P + \varepsilon_{i}$\
 Since some explanatory variables had different scales, we scaled them (*scale* function). However, in order to be able to compare the effects of the variables with each other, we only centred them (*scale = F)* without reducing them.
 
 ```{r}
-glm_pois_strikes <- glm(Strikes ~ scale(Total_Road, scale = F) + 
-                          scale(Dresid, scale = F) + scale(Dfruit, scale = F) + LogSightings,
+glm_pois_strikes <- glm(Strikes ~ scale(Total_Road, scale = FALSE) + 
+                          scale(Dresid, scale = FALSE) + scale(Dfruit, scale = FALSE) + LogSightings + Rainforest.P,
                 data = cassowary, 
                 family = poisson(link ="log"))
 summary(glm_pois_strikes)
 ```
 
--   **Overdispersion check :**   
+-   **Dispersion and Zero-inflation check :**\
+
 ```{r}
 simrespois <- simulateResiduals(glm_pois_strikes)
 testDispersion(simrespois)
 testZeroInflation(simrespois)
 plot(simulateResiduals(glm_pois_strikes))
 ```
-With the Poisson distribution, residuals are overfitted. So we switch to a Negative Binomial distribution. To test the zero-inflation and the dispersion, we also apply the function implemented in DHARMa package (@dharma_hartig). The result of the dispersion is significant.
+
+With the Poisson distribution, residuals are over dispersed. So we switch to a Negative Binomial distribution. To test the zero-inflation and the dispersion, we also apply the function implemented in DHARMa package (@dharma_hartig). The result of the dispersion is significant.
 
 ### GLM with Negative Binomial distribution
 
@@ -1117,14 +1146,13 @@ with :\
 - $\alpha$ the intercept,\
 - $\beta$ the coefficient representing the effect of each independant variables on $\lambda$,\
 - $\varepsilon$ the residuals,\
-- $X_i$ the independent variables   
-Here, we model  
-$log(\mu_i) = \alpha + \beta_1TotalRoad_i + \beta_2Dresid_i + \beta_3Dfruit_i + \beta_4log(Sightings_i+1)+ \varepsilon_{i}$
+- $X_i$ the independent variables\
+Here, we model\
+$log(\mu_i) = \alpha + \beta_1TotalRoad_i + \beta_2Dresid_i + \beta_3Dfruit_i + \beta_4log(Sightings_i+1)+ \beta_5Rainforest.P + \varepsilon_{i}$
 
 ```{r}
-glm_nb_strikes <- glm.nb(Strikes ~ scale(Total_Road, scale= F) + 
-                           scale(Dresid, scale = F) + scale(Dfruit, scale = F) + 
-                           LogSightings, 
+glm_nb_strikes <- glm.nb(Strikes ~ scale(Total_Road, scale= FALSE) + 
+                           scale(Dresid, scale = FALSE) + scale(Dfruit, scale = FALSE) + LogSightings + Rainforest.P, 
                          data = cassowary)
 summary(glm_nb_strikes)
 ```
@@ -1133,22 +1161,24 @@ summary(glm_nb_strikes)
 glm <- stepAIC(glm_nb_strikes, direction = "backward") 
 ```
 
-With the step AIC we choose the best model. We keep the one with the three variables `LogSightings`, `Dfruit` and `Total_Road` even if the last two variables are not significant. The difference between the AIC is just from 2, and with the issues with the `Y` variable, we prefer to keep the more complex model to explain strike mortality.
+With the step AIC we choose the best model. We keep the one with the four variables `LogSightings`, `Dfruit` , `Total_Road` and `Rainforest.P` even if the distance from road of fruit crops is not significant. The difference between the AIC is less than 2, and with the issues with the `Y` variable, we prefer to keep the more complex model to explain strike mortality.
 
 ```{r}
-glm_nb_strikes <- glm.nb(Strikes ~ scale(Total_Road, scale = F) + 
-                           scale(Dfruit, scale = F) + LogSightings,
+glm_nb_strikes <- glm.nb(Strikes ~ scale(Total_Road, scale = FALSE) + 
+                           scale(Dfruit, scale = FALSE) + LogSightings + Rainforest.P,
                          data = cassowary)
 summary(glm_nb_strikes)
 ```
 
--   **Overdispersion check :**
+-   **Dispersion check :**
+
 ```{r}
 simresnb <- simulateResiduals(glm_nb_strikes)
 testDispersion(simresnb)
 plot(simulateResiduals(glm_nb_strikes))
 testZeroInflation(simresnb)
 ```
+
 With the negative binomial distribution, there is no more overfitting in the residuals (@dharma_hartig). The model respect the assumption on the residuals.
 
 -   **Spatial autocorrelation check :**\
@@ -1158,39 +1188,36 @@ With the negative binomial distribution, there is no more overfitting in the res
 testSpatialAutocorrelation(simulateResiduals(glm_nb_strikes), 
                            x = cassowary$longitude, y = cassowary$latitude)
 ```
+
 Their is no spatial autocorrelation in this model.
 
-## Results of Mortality model 
-As for the first hypothesis, the first model tested was a **GLM with a Poisson distribution**. As there was overdispersion in the residuals, we changed to a **Negative Binomial model** to solve this issue. With this model, all assumptions about the residuals were validated. We opted for a NB model instead of a quasi-Poisson model, because the residuals assumptions checking of this semi-parametric distribution are not implemented in the DHARMa package (@dharma_hartig). After selecting the best NB model, we checked for spatial dependency with a Moran test, which was non-significant at the 5% alpha threshold. \
+Since our model is correct, we can visualized the predictors.
 
-As expected, the **strike mortality** is linked to the **presence of cassowaries** in the grid cell. The greater the number of individuals, the greater the risk of collision with a car. While the effect of the distance between the road and fruit crops is not significant, it is important to take it into consideration as it is the only negative parameter in the model. This suggests that the further away fruit crops are from the road, the lower the strike mortality.
+```{r}
+#|label: plot_alleffects_strikes
+#|fig-cap: "Predictor effects on Strikes"
 
-Some sources for comparison. The total length of the road also appears to be non significant in the final model,  but it is logical that more their is road in a grid cell, more the probability to encounter a cassowary on the road is higher en then to have a collision. Comparison with sources.
+plot(allEffects(glm_nb_strikes), ci.style = "bands", type = "response")
+```
 
-# Discussion
+The results show that strikes increase exponentially with the abundance and positive linearly with the rainforest proportion (@fig-plot_alleffects_strikes). However, here is with the log+1 transformation. Strikes also seems to linearly increase when the distance of the road of fruit crop increase. The opposite result is observe with the total length of the road.
 
-Several models have been test, and the one selected is... \
-The models show that cassowary abundances are higher when the landscape matrix is mostly compose of rainforest, their natural habitat. There is also a link with the crop fruit and must be from the abundance at least (number of model) for the cassowary to find sustainable resources. The presence of road impact also the presence of cassowary and the abundance tend to decrease when this variable increase. Blabla on this model. \
-(je sais pas vraiment quoi dire sur ce modèle vu que pas encore les résultats).
+## Results of Mortality model
 
-For both `Sightings` and `Strikes` variables, observations were collected by citizens and summed over the entire period of the program. One individual can be counted several times, as well as a dead one. As cassowaries have a territory of around 1km², it is possible that all cassowaries seen in the same grid cell were actually one individual. As we do not have information on individual identity, we cannot conclude on the true abundance of cassowaries, and can only speculate about their habitat.  
-Moreover, most of the data was collected at the side of the road and not deeper in the rainforest, making the abundance difficult to determine. Indeed, it it possible that most individuals were seen close to a frequently used road, and so were more likely to be seen even over a 20-years period of data collection. \
+As for the first hypothesis, the first model tested was a **GLM with a Poisson distribution**. As there was overdispersion in the residuals, we changed to a **Negative Binomial model** to solve this issue. With this model, all assumptions about the residuals were validated. We opted for a NB model instead of a quasi-Poisson model, because the residuals assumptions checking of this semi-parametric distribution are not implemented in the DHARMa package (@dharma_hartig). After selecting the best NB model, we checked for spatial dependency with a Moran test, which was non-significant at the 5% alpha threshold.
 
-The lack of information on temporal observations also caused issues in the analysis. If a strike was report, we cannot say if on this grid cell an observation of a new cassowary was report or not after the death.
-For cells where high abundances and high strike mortality were reported, we cannot say if a new individual was reported after the strike on the grid cell. If so, it is probably a new individual that has colonized the vacant territories. However, if this was not the case, we would be reporting the same individual several times, which would cause problems with the model and the hypothesis of cassowary favorable habitats and strikes. Furthermore, the initial study (@dwyer_using_2016) provides dated records of each cassowary sighting and strike, enabling temporal analyses that account for sampling bias.
+As expected, the **strike mortality** is linked to the **presence of cassowaries** and **rainforest proportion** in the grid cell. The greater the number of individuals, the greater the risk of collision with a car. Moreover, more the proportion of rain forest is, more the risk of strike is high. While the effect of the distance between the road and fruit crops is not significant, it is important to take it into consideration as it is the only negative parameter in the model. This suggests that the further away fruit crops are from the road, the lower the strike mortality.
 
-In conclusion, our results should be treated with caution as they are based on citizen science data. Indeed, our models are probably not quite adapted to this type of data, which demands great caution when analyzing it. The model for spatial autocorrelation in cassowary abundance estimation is not appropriate for the Poisson distribution of the data, and applying a log transformation to the Y count variable is not recommended (@ohara_log), particularly in the presence of 0, which can be distorted.    
-So, one area for improvement in our study could be to better account for both spatial dependence and non-Gaussian distribution in the sighting model. This can be achieved by adding covariance structures (spherical or gaussian, since we have patch structure), including the spatial coordinates of the points (@cov_struct), which can be done using the *glmmTMB* package (@glmmtmb). 
+@webber_predicting_2025 have show that cassowaries road collision are link to the abundance and to a high proportion of their natural habitat. They also explain that some road are more risked that other since most of collision appears in few grid cell 5 km x 5 km. In our model the total length of the road appears non significant in the final model, but it is logical that more their is road in a grid cell, more the probability to encounter a cassowary on the road is higher en then to have a collision.
 
-To reduce cassowary strike mortality, limiting new road construction, reducing deforestation and implementing wildlife crossing remain the most effective strategies. Wildlife crossings could reduce fragmentation and road collision at the same time, making them one of the best solution currently. Ultimately, preventing further nature destruction remains the best long-term solution (but we'll see the COP30 and UE decisions :')...
+# Discussion & Conclusion
 
-# Study limitations
+For both `Sightings` and `Strikes` variables, observations were collected by citizens and summed over the entire period of the program. One individual can be counted several times, as well as a dead one. As cassowaries have a territory of around 1km², it is possible that all cassowaries seen in the same grid cell were actually one individual. As we do not have information on individual identity and sampling strategies, we cannot conclude on the true abundance of cassowaries, and can only speculate about their habitat.\
+Moreover, most of the data was collected at the side of the road and not deeper in the rainforest, making the abundance difficult to determine. Indeed, it it possible that most individuals were seen close to a frequently used road, and so were more likely to be seen even over a 20-years period of data collection. This also cause a problem of the spatial pattern. We consider here the spatial structure as a continue one because grid cells are at regular interval, but their is some missing values and we don't have any information about this particularity.
 
--   Information manquante sur les stratégies d’échantillonnage
+The lack of information on temporal observations also caused issues in the analysis. If a strike was report, we cannot say if on this grid cell an observation of a new cassowary was report or not after the death. For cells where high abundances and high strike mortality were reported, we cannot say if a new individual was reported after the strike on the grid cell. If so, it is probably a new individual that has colonized the vacant territories. However, if this was not the case, we would be reporting the same individual several times, which would cause problems with the model and the hypothesis of cassowary favorable habitats and strikes. Furthermore, the initial study (@dwyer_using_2016) provides dated records of each cassowary sighting and strike, enabling temporal analyses that account for sampling bias.
 
--   Difficulté d’estimer l’effort d’échantillonnage (nombre de passages, sightings = vrai sightings ou 1 individu vu plein de fois)
+In conclusion, our results should be treated with caution as they are based on citizen science data. Indeed, our models are probably not quite adapted to this type of data, which demands great caution when analyzing it. The model for spatial autocorrelation in cassowary abundance estimation is not appropriate for the Poisson distribution of the data, and applying a log transformation to the Y count variable is not recommended (@ohara_log), particularly in the presence of 0, which can be distorted.\
+So, one area for improvement in our study could be to better account for both spatial dependence and non-Gaussian distribution in the sighting model. This can be achieved by adding covariance structures (spherical or Gaussian, since we have patch structure), including the spatial coordinates of the points (@cov_struct), which can be done using the *glmmTMB* package (@glmmtmb).
 
--   On cherche influence de la route sur strikings mais chaque cellule a été distribuée le long de la route...
-
--   Un 0 ou une valeur faible : plusieurs possibilités : soit l’individu n’a pas été détecté car pas présent dans le patch, soit il n’a pas été vu certaines années mais pour autant il était présent
-
+To reduce cassowary strike mortality and preserve its natural habitat, limiting new road construction, reducing deforestation and implementing wildlife crossing remain the most effective strategies. Wildlife crossings could reduce fragmentation and road collision at the same time, making them one of the best solution currently . Ultimately, preventing further nature destruction remains the best long-term solution (but we'll see the COP30 and UE decisions :')... But we are scientists and not politicians
