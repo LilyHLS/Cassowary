@@ -545,25 +545,25 @@ This is an important thing to consider because behind the variogram, there are 2
 #| label: correlograms
 #| fig-cap: "Correlograms for environmental variables"
 
-par(mfrow = c(3, 2))
+par(mfrow = c(2,3))
 plot(correlog(cassowary[,2:3], cassowary$Sightings, method = "Moran", nbclass = 12),
-     main = "Correlogram of Sightings")
+     main = "Sightings")
 abline(h = 0, lty = 2)
 
 plot(correlog(cassowary[,2:3], cassowary$Rainforest.P, method = "Moran", nbclass = 12),
-     main = "Correlogram of Rainforest proportion")
+     main = "Rainforest proportion")
 abline(h = 0, lty = 2)
 
 plot(correlog(cassowary[,2:3], cassowary$Residential.P, method = "Moran", nbclass = 12),
-     main="Correlogram of Proportion of residential area")
+     main="Proportion of residential area")
 abline(h = 0, lty = 2)
 
 plot(correlog(cassowary[,2:3], cassowary$Residential.P, method = "Moran", nbclass = 12),
-     main="Correlogram of Proportion of fruit crop")
+     main="Proportion of fruit crop")
 abline(h = 0, lty = 2)
 
 plot(correlog(cassowary[,2:3], cassowary$Total_Road, method = "Moran", nbclass = 12),
-     main="Correlogram of the length of the road")
+     main="Length of the road")
 abline(h = 0, lty = 2)
 ```
 
@@ -1056,27 +1056,27 @@ There is a correlation between `Sightings` and `LogSightings` but we will just k
 ### Spatial dependency 
 
 ```{r}
-#| label: correlograms2
+#| label: fig-correlograms2
 #| fig-cap: "Correlograms for road link variables and sightings"
-par(mfrow = c(3, 2))
+par(mfrow = c(2, 3))
 plot(correlog(cassowary[, 2:3], cassowary$Strikes, method = "Moran", nbclass = 12),
-     main = "Correlogram of Strikes")
+     main = "Strikes")
 abline(h = 0, lty = 2)
 plot(correlog(cassowary[, 2:3], cassowary$Total_Road, method = "Moran", nbclass = 12),
-     main = "Correlogram of Total road")
+     main = "Total road")
 abline(h = 0, lty = 2)
 plot(correlog(cassowary[, 2:3], cassowary$Dresid, method = "Moran", nbclass = 12),
-     main = "Correlogram of distance to the residential area")
+     main = "Distance to the residential area")
 abline(h = 0, lty = 2)
 plot(correlog(cassowary[, 2:3], cassowary$Dfruit, method = "Moran", nbclass = 12),
-     main = "Correlogram of distance to the fruit crops")
+     main = "Distance to the fruit crops")
 abline(h = 0, lty = 2)
 plot(correlog(cassowary[,2:3], cassowary$Sightings, method = "Moran", nbclass = 12),
-     main = "Correlogram of Sightings")
+     main = "Sightings")
 abline(h = 0, lty = 2)
 ```
 
-As for the first problematic, we analyse spatial dependency with correlograms based on Moran's index (@correlograms2). The high values mean that dot are correlated with each other and the red one are significant correlation. For the `Strikes` and `Sightings` variables, their is the same correlogram because strikes can occur only if their is cassowary, and values are auto correlated until 7km that probably correspond the cassowaries re partition area.
+As for the first problematic, we analyse spatial dependency with correlograms based on Moran's index (@fig-correlograms2). The high values mean that dot are correlated with each other and the red one are significant correlation. For the `Strikes` and `Sightings` variables, their is the same correlogram because strikes can occur only if their is cassowary, and values are auto correlated until 7km that probably correspond the cassowaries re partition area.
 
 ### GLM with Poisson Distribution
 
