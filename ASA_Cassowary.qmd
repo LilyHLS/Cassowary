@@ -222,13 +222,16 @@ There is a good balance between presence and absence for each variable. However,
 -   **Potential relationships between response variable (Sightings) and quantitative variables :**
 
 ```{r}
+#| label: fig-relatio_Sight_quant
+#| fig-cap: "Changes in Sightings values based on quantitative environmental variables "
+
 par(mfrow=c(2, 2))
 
 # Rainforest.P
 plot(cassowary$Sightings ~ cassowary$Rainforest.P, pch = 16,
      col = 'olivedrab4', xlab = 'Proportion of rainforest', ylab = 'Sightings')
 
-#Residential.P
+# Residential.P
 plot(cassowary$Sightings ~ cassowary$Residential.P, pch = 16, 
      col = 'olivedrab4', xlab = 'Proportion of residential area', ylab = 'Sightings')
 
@@ -236,25 +239,25 @@ plot(cassowary$Sightings ~ cassowary$Residential.P, pch = 16,
 plot(cassowary$Sightings ~ cassowary$Fruit.P, pch = 16, 
      col = 'olivedrab4', xlab = 'Proportion of fruit crop', ylab = 'Sightings')
 
-#Other.P
+# Other.P
 plot(cassowary$Sightings ~ cassowary$Other.P, pch = 16, 
      col = 'olivedrab4', xlab = 'Proportion of wetlands and pasture', 
      ylab = 'Sightings')
 
 
-#Total_Road
+# Total_Road
 plot(cassowary$Sightings ~ cassowary$Total_Road, pch = 16, 
      col = 'olivedrab4', xlab = 'Road length inside of the grid', 
      ylab = 'Sightings')
 
 
-#Dfruit
+# Dfruit
 plot(cassowary$Sightings ~ cassowary$Dfruit, pch = 16, 
      col = 'olivedrab4', xlab = 'Distance between road and fruit crops', 
      ylab = 'Sightings')
 
 
-#Dresid
+# Dresid
 plot(cassowary$Sightings ~ cassowary$Dresid, pch = 16, 
      col = 'olivedrab4', xlab = 'Distance between road and residential area', 
      ylab = 'Sightings')
@@ -263,20 +266,23 @@ plot(cassowary$Sightings ~ cassowary$Dresid, pch = 16,
 -   **Potential relationships between response variable (Sightings) and qualitative variables :**
 
 ```{r}
+#| label: fig-relatio_Sight_quali
+#| fig-cap: "Changes in Sightings values based on qualitative environmental variables "
+
 par(mfrow = c(2, 1))
-#Residential.01 
+
+# Residential.01 
 boxplot(cassowary$Sightings ~ cassowary$Residential.01, pch = 16,
         col = 'olivedrab4', xlab = 'presence/absence of residential area',
         ylab = 'Sightings')
 
-#Fruit.01
+# Fruit.01
 boxplot(cassowary$Sightings ~ cassowary$Fruit.01, pch = 16,
         col = 'olivedrab4', xlab = 'presence/absence of fruit crop',
         ylab = 'Sightings')
-
 ```
 
-Using graphs, it seems difficult to see relations between $Y$ and $Xs$. One explanation is that there are a lot of zeros in `Sightings`. Nevertheless, we observe that more cassowary individuals are observed when `Rainforest.P` is higher. The opposite relation is observed between Y and `Other.P`. `Other.P` and `Rainforest.P` could be correlated : we check correlation between $Xs$ in the following section. Regarding `Fruit.P`, it seems that cassowaries are more counted when the proportion of fruit crop is lower but when this proportion is higher, the counts are superior to 0 individuals. We also checked the relation between `Dresid` and `Sightings`, and the relation between `Dfruit` and `Sightings` : no obvious relations appear on graphs but ecologically, we think that `Sightings` is not influenced by `Dfruit` and `Dresid`. We won't test theses two relations.
+Using graphs (@fig-relatio_Sight_quant and @fig-relatio_Sight_quali), it seems difficult to see relations between $Y$ and $Xs$. One explanation is that there are a lot of zeros in `Sightings`. Nevertheless, we observe that more cassowary individuals are observed when `Rainforest.P` is higher. The opposite relation is observed between Y and `Other.P`. `Other.P` and `Rainforest.P` could be correlated : we check correlation between $Xs$ in the following section. Regarding `Fruit.P`, it seems that cassowaries are more counted when the proportion of fruit crop is lower but when this proportion is higher, the counts are superior to 0 individuals. We also checked the relation between `Dresid` and `Sightings`, and the relation between `Dfruit` and `Sightings` : no obvious relations appear on graphs but ecologically, we think that `Sightings` is not influenced by `Dfruit` and `Dresid`. We won't test theses two relations.
 
 ### Correlation between environmental variables $X$
 
@@ -285,6 +291,7 @@ Using graphs, it seems difficult to see relations between $Y$ and $Xs$. One expl
 ```{r correlation abundance X}
 #| label: fig-corrplot
 #| fig-cap : "Correlation between environmental variables"
+
 correlation <- cor(env)
 corrplot(correlation, type = "upper", method = "number")
 ```
@@ -370,9 +377,12 @@ boxplot(cassowary$Total_Road ~ cassowary$Residential.01, varwidth = TRUE,
 
 There is a positive correlation between the data on the presence/absence of fruit crops `Fruit.01` and the proportion of fruit crops within the grid `Fruit.P` (as well as for the presence/absence of residential areas `Residential.01` and the proportion of residential areas within the grid `Residential.P`). This result is also expected because these variables highlight similar information. It will therefore be necessary in the subsequent analysis to choose which environmental variables to select in order to avoid them being too correlated.
 
-### Analysis of possible interactions between variables $X$
+### Analysis of possible interactions between environmental variables $X$
 
 ```{r}
+#| label: fig-int
+#| fig-cap : "Interaction between environmental variables"
+
 par(mfrow=c(2,2)) 
 
 # Interactions between Rainforest.P & Fruit.01 ---------------------------------
@@ -408,7 +418,7 @@ points(Sightings[Residential.01 == "1"] ~ Fruit.P[Residential.01 == "1"],
        pch = 17, col = 'darkorchid', data = cassowary) 
 ```
 
-We could test interactions in the model if necessary but don't really wan't to include `Residential.01` and `Fruit.01` in the model.
+We could test interactions in the model if necessary, but there do not appear to be any strong interactions between these variables. Furthermore, the variables `Residential.01` and `Fruit.01` include information already present in `Residential.P` and `Fruit.P`, so it does not seem necessary to include them in the models.
 
 ### Observations regarding spatial data with cartography
 
@@ -438,7 +448,7 @@ cassow_sf %>%
 ```
 
 The grid-cells are distributed evenly throughout the space, but follow the layout of the roads : therefore, there are no cells in the middle of the rainforests.\
-The difference in the extent of rainforests between the OpenStreetMap base map (@fig-carto_cells) and that of the article is probably due to the time difference between the sources.
+The difference in the extent of rainforests between the OpenStreetMap base map (@fig-carto_cells) and that of the article is probably due to the time difference between the sources (and the possible deforestation).
 
 ```{r}
 #| label: fig-carto_pabs
@@ -471,13 +481,11 @@ The mortality strike occur on the road near the rainforest and where cassowaries
 
 With these observations and the collinearity observed before, we can keep `Rainforest.P` instead of `Other.P`for the model. It can have more direct signification while formulating the model.
 
-------------------------------------------------------------------------
-
 ## Statistical Analysis
 
 ### Spatial dependency: semi-variogramm & correlogram (should we keep semi-variogramm?)
 
-First, we have to investigate if there is spatial dependency in the variables and because this is a continuous process, we are going to visualize the semi-variograms. For this first model, related to the first problematic **"Which factors influence the southern cassowary abundance?"** we do not take into account `Strikes` and the variables directly linked to the road (`Total_Road`, `Dresid`&`Dfruit`).
+First, we have to investigate whether there is spatial dependency in the variables. As this can be seen as a continuous process, we will visualize the semi-variograms. For this first model, relating to the first problematic **"Which factors influence the southern cassowary abundance?"**, we will not consider `Strikes` and the variables directly linked to the road (`Total_Road`, `Dresid`&`Dfruit`).
 
 ```{r}
 geo_sight <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),
@@ -492,10 +500,14 @@ geo_otherp <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]),
                                                 data.frame(cassowary$Other.P)))
 ```
 
-In order to plot the semi variance plot (semi-variogram) for the variables, especially the respond variable, we need to look at the distribution of distance between points.
+In order to plot the semi-variance plots (semi-variograms) for the variables, especially the response variable, we need to examine the distribution of distances between points.
 
 ```{r}
-hist(dist(cassowary[,2:3]))
+#| label: fig-distribdist
+#| fig-cap: "Distribution of distances between sites"
+
+hist(dist(cassowary[,2:3]), xlab = "Distance between sites (in meters)", 
+     ylab = "Frequency", main = "")
 ```
 
 We can see that 95% of the distance are under 25 000, 30 000 meters.
@@ -506,8 +518,6 @@ We can see that 95% of the distance are under 25 000, 30 000 meters.
 
 semivar_sight <- variog(geo_sight, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_rain <- variog(geo_rainp, option = "bin", max.dist = 30000, messages = FALSE)
-#semivar_residb <- variog(geo_residb, option = "bin", max.dist = 30000, messages = FALSE)
-#semivar_fruitb <- variog(geo_fruitb, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_residp <- variog(geo_residp, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_fruitp <- variog(geo_fruitp, option = "bin", max.dist = 30000, messages = FALSE)
 semivar_otherp <- variog(geo_otherp, option = "bin", max.dist = 30000, messages = FALSE)
@@ -527,16 +537,14 @@ plot(semivar_fruitp, main = "Proportion of fruit crop")
 plot(semivar_otherp, main = "Proportion of other")
 ```
 
-As we can see on all the plots of @fig-semivario, except maybe for the semi-variogram for presence/absence of residential area, **the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 meters** because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi-variogram for proportion of fruit crop, we can even see 2 maxima.
+As we can see from all the plots of @fig-semivario, except maybe for the semi-variogram for the presence/absence of residential areas, **the values between points seem to become less similar as the distance increases, until it reaches 15 000 or 20 000 meters.** From this point, the variance seems to decrease, meaning that the points start to become more similar again. On the semi-variogram for the proportion of fruit crops, we can even see 2 maxima.
 
-As we can see on all the plots, except maybe for the semi-variogram for presence/absence of residential area, the values between points seem to become less similar when distance increases until it reaches 15 000 or 20 000 meters because from this point, the variance seems to decrease and so points start becoming more similar again. On the semi-variogram for proportion of fruit crop, we can even see 2 maxima.
+These types of graphs are usually indicative of a **periodic phenomenon**, also known as **patches or clusters**. However, in this case, we did not apply any transformation on the data. In fact, `Sighthings` are count data (Poisson distribution), `Residential.P` and `Fruit.P` present many zeros (maybe with zero-inflated case), `Residential.01` and `Fruit.01` are presence/absence data (binary).
 
-These types of graphs are usually typical of a **periodic phenomenon**, also known as **patches or clusters**, however, here we did not apply any transformation on the data. In fact, `Sighthings` are counting data (Poisson law), `Residential.P` and `Fruit.P` present a lot of zeros (zero-inflated method), `Residential.01` and `Fruit.01` are presence/absence data (binary).
-
-This is an important thing to consider because behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : the stationarity of the expected value and the stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, for counting data, the variance increases linearly with the mean).
+It is important to consider this because, behind the variogram, there are 2 fundamental assumptions valid for any location, also known as the second-order stationarity : stationarity of the expected value and stationarity of the covariance (covariance between two points depends only on the spatial shift of vector `h`, and not on the absolute positions). These assumptions presuppose a certain spatial homogeneity of the phenomenon under study, which is not the case by default for our variables of interest (for instance, in Poisson dsitribution, the variance increases linearly with the mean).
 
 ```{r}
-#| label: correlograms
+#| label: fig-correlograms
 #| fig-cap: "Correlograms for environmental variables"
 
 par(mfrow = c(2,3))
@@ -561,16 +569,16 @@ plot(correlog(cassowary[,2:3], cassowary$Total_Road, method = "Moran", nbclass =
 abline(h = 0, lty = 2)
 ```
 
-These correlograms are based on Moran's index. High values are positively correlated with each other. The red dots are significant correlations. Most variables show autocorrelation up to 7 km.
+These correlograms are based on Moran's index (@fig-correlograms). High values are positively correlated with each other. The red dots are significant correlations. Most variables show autocorrelation up to 7 km (7000m).
 
 ### GLM with Poisson Distribution
 
-As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log link function (@mohammed2025spatial).\
-$Sightings$ \~ $P(\lambda)$, with $\lambda$, the expectation and variance rate of events. Here, variance increases linearly with the mean.\
-With the log link function : $log(\lambda_i) = \alpha + \beta_iX_i + \varepsilon_{i}$\
+As we have count response data (i.e quantity of events), we used **generalised linear models** (GLMs) with a **Poisson** distribution and a log-link function (@mohammed2025spatial).\
+$Sightings$ \~ $P(\lambda)$, with $\lambda$, the expectation and variance rate of events. With a Poisson distribution, variance increases linearly with the mean.\
+With the log-link function : $log(\lambda_i) = \alpha + \beta_iX_i + \varepsilon_{i}$\
 with :\
 - $\alpha$ the intercept,\
-- $\beta$ the coefficient represnting the effect of each independant variables on $\lambda$,\
+- $\beta$ the coefficient representing the effect of each independent variables on $\lambda$,\
 - $\varepsilon$ the residuals,\
 - $X_i$ the independent variables \
 Here, we model :\
@@ -589,11 +597,14 @@ summary(glm_pois1)
     *Overdispersion means that that residual variance is larger than expected under the fitted model. If overdispersion is present, confidence intervals will tend to be too narrow, and p-values too small, leading to inflated type I error. This phenom is most common for GLM families with constant dispersion, such as Poisson models. (@dharma_hartig)*
 
 ```{r}
+#| label: fig-dharma1
+#| fig-cap: "DHARMa check for dispersion, outliers in the model residuals"
+
 simout <- simulateResiduals(fittedModel = glm_pois1, plot = F)
 plot(simout)
 ```
 
-Here, there is overdispersion, it can be due to outliers, model misfit, missing interactions and zero-inflation.
+Here, there is overdispersion, it can be due to outliers, model misfit, missing interactions or zero-inflation.
 
 We can take a closer look at the problems with the model (zero-inflation and overdispersion) :
 
@@ -602,13 +613,12 @@ testDispersion(simout)
 testZeroInflation(simout)
 ```
 
-Dharma test shows also zero-inflation (a situation when more zeros appear in the observation than expected under the fitted model).
+Dharma test shows also zero-inflation (i.e a situation in which more zeros appear in the observations than are expected under the fitted model).
 
+Other methods can be used to study the overdispersion of residuals : 
 -   Ratio residual deviance / ddl $\phi$ :\
     It allows us to estimate whether the actual variance of the observations is not too far from the theoretical variance : $\phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}$\
     If this ratio is greater than 1, then there is overdispersion. It is based on log-likelihood and is less sensitive to extreme points.
-
-Should we keep this part? Does Dharma is enough? I haven't done that for the mortality model
 
 ```{r}
 #based on the results of glm_pois1
@@ -630,13 +640,16 @@ Here, the Pearson residuals are way above 1, so there is overdispersion.
 
 ### GLM with Negative Binomial Distribution
 
-To account for the overdispersion of the residuals, we switch to a GLM with a **Negative binomial** distribution, with a log link function. $Sightings$ \~ $NB(\mu, \phi)$, with $\mu$ the mean of the distribution, and $\phi$ the dispersion parameters.\
+To account for the overdispersion of the residuals, we switch to a GLM with a **Negative binomial** distribution, with a log-link function.  
+$Sightings$ \~ $NB(\mu, \phi)$, with $\mu$ the mean of the distribution, and $\phi$ the dispersion parameters.\
 With the log link function : $log(\mu_i) = \alpha + \beta_iX_i + \varepsilon_{i} = \eta$\
 with :\
 - $\alpha$ the intercept,\
 - $\beta$ the coefficient representing the effect of each independant variables on $\lambda$,\
 - $\varepsilon$ the residuals,\
-- $X_i$ the independent variables Here, we model $log(\mu_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \beta_4TotalRoad +\varepsilon_{i}$
+- $X_i$ the independent variables\    
+Here, we model\  
+$log(\mu_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \beta_4TotalRoad +\varepsilon_{i}$
 
 ```{r}
 glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Total_Road, data = cassowary)
@@ -644,13 +657,27 @@ summary(glm_NB)
 ```
 
 -   **Overdispersion check (scale parameter calculation) :**\
+-   Dharma test :
+
+```{r}
+#| label: fig-dharmaNB
+#| fig-cap: "DHARMa check for dispersion, outliers in the model residuals"
+
+simout_NB <- simulateResiduals(fittedModel = glm_NB, plot = F)
+plot(simout_NB)
+testZeroInflation(simout_NB)
+testDispersion(simout_NB)
+```
+
+There is no longer any overdispersion : the negative binomial distribution seems appropriate in this case. If this had not been the case, we would have considered other distributions, such as the one that include zero-inflation (i.e. a situation in which more zeros appear in the observations than are expected under the fitted model).   
+
 -   Ratio residual deviance / ddl :
 
 ```{r}
 173.48/249
 ```
 
-Here, the ratio \< 1 : there is no overdispersion.
+Here, the ratio < 1 : there is no overdispersion.
 
 -   Residus de Pearson :
 
@@ -661,30 +688,21 @@ p  <- length(coef(glm_NB))
 sum(E1^2) / (N - p)
 ```
 
--   Dharma test :
 
 ```{r}
-simout_NB <- simulateResiduals(fittedModel = glm_NB, plot = F)
-plot(simout_NB)
-testZeroInflation(simout_NB)
-testDispersion(simout_NB)
-```
+#| label: fig-semivariog_NB
+#| fig-cap: "Semi-variogram of the residuals of the negative binomial model "
 
-No more overdispersion : the negative binomial distribution seems appropriate in this case. If this had not been the case, we would have considered other distributions, such as the one that include zero-inflation (i.e. a situation when more zeros appear in the observation than expected under the fitted model).
-
-Write the results of model
-
-```{r}
 geo_resid <- as.geodata(SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
                                                data.frame(E1)))
 semivar_resid <- variog(geo_resid, option = "bin", max.dist = 30000)
-plot(semivar_resid, main = "Semi-variogramme des résidus NB")
+plot(semivar_resid, main = "")
 ```
 
-We still have an abnormal semi variogram ??? A préciser
+We still have an abnormal semi variogram, showing spatial dependence with a non-stationary case.   
 
 -   **Spatial autocorrelation check :**\
-    Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
+    Since we have spatial data, we need to check for any spatial dependence between observations, by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
 
 ```{r}
 # Dharma procedure :
@@ -693,7 +711,8 @@ testSpatialAutocorrelation(simulateResiduals(glm_NB),
 ```
 
 For each point, we have a local Moran index.\
-Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. We have significant positive autocorrelation (p-value \< 2.2e-16) : this means that two observations that are close together are more likely to be similar than two observations that are far apart. In the case of a stationary process, the residuals are spatially random, however here the intensities and the colours of the points vary a lot which is a sign of a global non-stationarity of the relationship between `Sightings` and the explanatory variables.
+Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. There is significant positive autocorrelation (p-value \< 2.2e-16) : this means that two observations close together are more likely to be similar than two observations far apart. On the contrary, when there is no spatial dependance, in a stationary process, the residuals are spatially random.     
+Here, the intensities and the colours of the points vary a lot, indicating global non-stationarity of the relationship between `Sightings` and the explanatory variables.   
 
 -   **First visualisation of result :**\
     Even if our model is not correct because of spatial autocorrelation, we can still visualize the predictors of the Negative Binomial GLM.
@@ -705,15 +724,13 @@ Here, the observed Moran's index is higher than the expected. This indicates a t
 plot(allEffects(glm_NB), ci.style = "bands")
 ```
 
-It shows the effects plotted on the scale of the linear predictor, but the vertical axis is labelled on the response scale. This preserves the linear structure of the model while permitting interpretation on what is usually a more familiar scale (ref)
+It shows the effects plotted on the scale of the linear predictor, but the vertical axis is labelled on the response scale. This preserves the linear structure of the model while permitting interpretation on what is usually a more familiar scale (@R_effects)
 
 ### Geostatistical model GWR
 
-In the previous models, we have strong spatial autocorrelation. The GWR model can allow us to take **local** spatial dependence into account. For each observation, a regression is fitted only based on the localized neighborhood, so we obtain one intercept and one estimate for each point.
+The previous models had strong spatial autocorrelation. The **GWR model** allows us to take **local** spatial dependence into account. For each observation, a regression is fitted based only on the localized neighborhood, so we obtain one intercept and one estimate for each point.
 
-We define the *SpatialPointsDataFrame* with both variables and coordinates and we optimize the bandwidth for the kernel function. I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). We try to use log(Y+1) transformation on the response variable in a general linear model and then the ***gwr*** function.
-
-**GWR because of the non-stationarity** : I tried to use a GGWR rather than a GWR because, like we saw, the Negative binomial model seem to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions didn't work as expected (a lot of problems I didn't know how to solve). So, here I simply used the log(y+1) transformation on the response variable and the ***gwr*** function for general linear models.
+We define the *SpatialPointsDataFrame* with both variables and coordinates, and optimize the bandwidth for the kernel function. We tried to use a GGWR rather than a GWR because, as we saw, the Negative binomial model seems to be the most appropriate one. However, the ***bw.ggwr*** and ***gwr.generalised*** functions did not work as expected (there were a lot of problems that we didn't know how to solve). We tried using a log(Y+1) transformation on the response variable in a general linear model, and then the ***gwr*** function.
 
 #### A study of log(Sightings + 1) as the response variable
 
@@ -759,18 +776,22 @@ qqnorm(cassowary$Y_1, pch=16, col=col_transp, xlab='', ylab='',main="QQ plot")
 qqline(cassowary$Y_1, col='red', lwd=2)
 ```
 
-Still a lot of zeros... Le log ne règle pas le problème des zéros.
+There are still many low values and a non-normal distribution of the variable to be explained, despite the log transformation.
 
-We try to fit the model with the sames variables as in the previous glm.
-
+-   **Linear model with log(Sightings + 1) :**    
 ```{r model lm}
-try_linear = lm(Y_1 ~ Rainforest.P + Residential.P + Fruit.P + Total_Road, data = cassowary)
+try_linear <- lm(Y_1 ~ Rainforest.P + Residential.P + Fruit.P + Total_Road, 
+                 data = cassowary)
 summary(try_linear)
 ```
 
-This leads to make the distribution of the response closer to a Gaussian, allowing the use of classical GWR (gwr) on a linear model.
+This makes the distribution of the response variable closer to a Gaussian, allowing classical GWR (gwr) to be used on a linear model.
 
--   **Residuals normality :**\
+-   **Residuals normality and Homoscedasticity :**\
+
+```{r}
+plot(try_linear, pch = 19)
+```
 
 ```{r ResidNorm, include=TRUE, fig.height=4, fig.width=6}
 par(mfrow=c(1,2))
@@ -816,7 +837,8 @@ Presence of spatial autocorrelation
 
 #### GWR Model
 
-To apply the **GWR model**, we have to define the SpatialPointsDataFrame with both variables and coordinates in an object called `geocass.` At this stage, we also optimize the bandwidth (a metric that represents a distance between points or the number of neighbors used in each regression) for the kernel function (neighborhood weighting function) and then we run the GWR model. The determination of the bandwith is actually based on the spatial autocorrelogram and most notably, the influence of the neighbors is weighted by a decreasing function of distance.
+To apply the **GWR model**, we have to define the SpatialPointsDataFrame with both variables and coordinates in an object called `geocass.`  
+At this stage, we also optimize the bandwidth (a metric that represents a distance between points or the number of neighbors used in each regression) for the kernel function (neighborhood weighting function) and then we run the GWR model. The determination of the bandwith is actually based on the spatial autocorrelogram and most notably, the influence of the neighbors is weighted by a decreasing function of distance.
 
 ```{r}
 geocass <- SpatialPointsDataFrame(data.frame(cassowary[,2:3]), 
