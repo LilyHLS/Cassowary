@@ -31,7 +31,7 @@ p {
 The southern cassowary (*Casuarius casuarius johnsonii)* is a territorial and solitary animal difficult to observe due to its endangered status and elusive behavior (@moore_population_2007). Individuals have a territory estimated between 0.52 km² to 2.35 km² and only come into contact during the mating season or in area where food resources are important (@moore_population_2007). This bird occur in the wet tropical rainforest of north-eastern Australia and in associated vegetation mosaics (@moore_population_2007). It's a frugivorous bird that may also use other habitats for dispersal or as intermittent food resources (@westcott_counting_1999, @campbell_southern_2023). Its ecological status is important as it's one of the few frugivorous capable of dispersing large rainforest fruit seeds over long distance (@westcott_counting_1999). In recent decades, populations have been affected by several factors such as natural catastrophic events, diseases, dog attacks, roads traffic and habitat implications, including degradation, fragmentation and loss (Queensland Parks and Wildlife Services, 2001).
 
 It is essential to estimate the factors that may impact the abundance of southern cassowary population in order to ensure its conservation. @dwyer_using_2016 used citizen science data to model the risk of traffic strike in Australia. Sum of road collisions and abundance data were recorded by Queensland Parks and Wildlife Services between 1992 and 2012 (20 years) on 1 km² grid-cells covering the study area.\
-Using this data, compiled with the habitat variables and the distance of road location of each grid-cells (@tbl-descrva) by @dwyer_using_2016, we aim to answer the following questions :\
+Using this data, compiled with the habitat variables and the distance of road location of each grid-cells by @dwyer_using_2016, we aim to answer the following questions :\
 **Which factors influence the southern cassowary abundance ? Is there any implication for strike mortality management ?**
 
 ![](images/fig1_study_area.png){width="669"}
@@ -40,19 +40,19 @@ Using this data, compiled with the habitat variables and the distance of road lo
 (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and traffic strikes that have occurred are geo-referenced in 1 km grid cells. (from @dwyer_using_2016)
 
 ::: {#tbl-descrva}
-| Variable name | Ecological reference |
+| Variable name                           | Ecological reference                                        |
 |------------------------------------|------------------------------------|
-| `Rainforest.P` (quantitative continue) | proportion of rainforest within the grid |
-| `Residential.P` (quantitative continue) | proportion of residential area within the grid |
-| `Fruit.P` (quantitative continue) | proportion of fruit crop within the grid |
-| `Other.P` (quantitative continue) | proportion of other area (pasture, wetland) within the grid |
-| `Total_Road` (quantitative continue) | length of road within the grid |
-| `Sightings` (quantitative counting) | visual contact of cassowary |
-| `Strikes` (quantitative counting) | mortality of cassowary due to road traffic |
-| `Residential.01` (quantitative binary) | presence /absence of residential area |
-| `Fruit.01` (quantitative binary) | presence /absence of fruit crop |
-| `Dresid` (quantitative continue) | distance of the road to residential area |
-| `Dfruit` (quantitative continue) | distance of the road to fruit crop area |
+| `Rainforest.P` (quantitative continue)  | proportion of rainforest within the grid                    |
+| `Residential.P` (quantitative continue) | proportion of residential area within the grid              |
+| `Fruit.P` (quantitative continue)       | proportion of fruit crop within the grid                    |
+| `Other.P` (quantitative continue)       | proportion of other area (pasture, wetland) within the grid |
+| `Total_Road` (quantitative continue)    | length of road within the grid                              |
+| `Sightings` (quantitative counting)     | visual contact of cassowary                                 |
+| `Strikes` (quantitative counting)       | mortality of cassowary due to road traffic                  |
+| `Residential.01` (quantitative binary)  | presence /absence of residential area                       |
+| `Fruit.01` (quantitative binary)        | presence /absence of fruit crop                             |
+| `Dresid` (quantitative continue)        | distance of the road to residential area                    |
+| `Dfruit` (quantitative continue)        | distance of the road to fruit crop area                     |
 
 Table of the cassowary variables and their ecological meaning.
 :::
@@ -61,7 +61,7 @@ To answer the questions, we will first formulate a model with `Sightings` as a r
 
 We note that `Sightings` doesn't represent actual abundances of Cassowaries, but counts made over 20 years by several people who participated in a citizen science program. The number of `Sightings` does not reflect the number of cassowary individuals, but rather the number of observations in each grid-cell of 1 km². Therefore, to answer the main question, we study the influence of factors on a proxy for abundance, where `Sightings` give an idea of cassowary activity and in what context they were observed most often and were therefore most abundant.
 
-In this study, we have several variables linked to the environment as well as the latitude and longitude of each cell (@descrva). Close cells may have similar environmental conditions and that may influence the count of cassowaries. Cassowaries can probably move from a cell to another cell nearby, this can also influence `Sightings`. There are repeated counts in some cells : they were carried out over several years and each year, several citizens came to count in the same patches. Therefore, it is possible that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test for spatial autocorrelation.
+In this study, we have several variables linked to the environment as well as the latitude and longitude of each cell (@tbl-descrva). Close cells may have similar environmental conditions and that may influence the count of cassowaries. Cassowaries can probably move from a cell to another cell nearby, this can also influence `Sightings`. There are repeated counts in some cells : they were carried out over several years and each year, several citizens came to count in the same patches. Therefore, it is possible that there is spatial correlation between the different cells. The coordinates of the grid-cells centroids will enable us to test for spatial autocorrelation.
 
 **Hypothesis:** *We assume that southern cassowary is mainly distributed near its natural habitat (rainforest) or in areas where food is available (fruit crop). We expect that high proportions of rainforest and fruit crops are associated with greatest cassowary abundance.*\
 *We also assume that traffic strike is higher when the road connects to favorable habitat, with a low distance between fruit crops and road.*
@@ -615,10 +615,9 @@ testZeroInflation(simout)
 
 Dharma test shows also zero-inflation (i.e a situation in which more zeros appear in the observations than are expected under the fitted model).
 
-Other methods can be used to study the overdispersion of residuals : 
--   Ratio residual deviance / ddl $\phi$ :\
-    It allows us to estimate whether the actual variance of the observations is not too far from the theoretical variance : $\phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}$\
-    If this ratio is greater than 1, then there is overdispersion. It is based on log-likelihood and is less sensitive to extreme points.
+Other methods can be used to study the overdispersion of residuals : - Ratio residual deviance / ddl $\phi$ :\
+It allows us to estimate whether the actual variance of the observations is not too far from the theoretical variance : $\phi = \frac{\text{variance observed}}{\text{theoretical variance}} = \frac{residual deviance}{number of degrees of freedom}$\
+If this ratio is greater than 1, then there is overdispersion. It is based on log-likelihood and is less sensitive to extreme points.
 
 ```{r}
 #based on the results of glm_pois1
@@ -640,20 +639,20 @@ Here, the Pearson residuals are way above 1, so there is overdispersion.
 
 ### GLM with Negative Binomial Distribution
 
-To account for the overdispersion of the residuals, we switch to a GLM with a **Negative binomial** distribution, with a log-link function.  
+To account for the overdispersion of the residuals, we switch to a GLM with a **Negative binomial** distribution, with a log-link function.\
 $Sightings$ \~ $NB(\mu, \phi)$, with $\mu$ the mean of the distribution, and $\phi$ the dispersion parameters.\
 With the log link function : $log(\mu_i) = \alpha + \beta_iX_i + \varepsilon_{i} = \eta$\
 with :\
 - $\alpha$ the intercept,\
 - $\beta$ the coefficient representing the effect of each independant variables on $\lambda$,\
 - $\varepsilon$ the residuals,\
-- $X_i$ the independent variables\    
-Here, we model\  
-$log(\mu_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \beta_4TotalRoad +\varepsilon_{i}$
+- $X_i$ the independent variables \
+Here, we model  $log(\mu_i) = \alpha + \beta_1Raiforest_i + \beta_2Residential.P_i + \beta_3Fruit.P_i + \beta_4TotalRoad +\varepsilon_{i}$
 
 ```{r}
 glm_NB <- glm.nb(Sightings ~ Rainforest.P + Residential.P + Fruit.P + Total_Road, data = cassowary)
 summary(glm_NB)
+coef <- glm_NB$coefficients
 ```
 
 -   **Overdispersion check (scale parameter calculation) :**\
@@ -669,7 +668,7 @@ testZeroInflation(simout_NB)
 testDispersion(simout_NB)
 ```
 
-There is no longer any overdispersion : the negative binomial distribution seems appropriate in this case. If this had not been the case, we would have considered other distributions, such as the one that include zero-inflation (i.e. a situation in which more zeros appear in the observations than are expected under the fitted model).   
+There is no longer any overdispersion : the negative binomial distribution seems appropriate in this case. If this had not been the case, we would have considered other distributions, such as the one that include zero-inflation (i.e. a situation in which more zeros appear in the observations than are expected under the fitted model).
 
 -   Ratio residual deviance / ddl :
 
@@ -677,7 +676,7 @@ There is no longer any overdispersion : the negative binomial distribution seems
 173.48/249
 ```
 
-Here, the ratio < 1 : there is no overdispersion.
+Here, the ratio \< 1 : there is no overdispersion.
 
 -   Residus de Pearson :
 
@@ -698,7 +697,7 @@ semivar_resid <- variog(geo_resid, option = "bin", max.dist = 30000)
 plot(semivar_resid, main = "")
 ```
 
-We still have an abnormal semi variogram, showing spatial dependence with a non-stationary case.   
+We still have an abnormal semi variogram, showing spatial dependence with a non-stationary case.
 
 -   **Spatial autocorrelation check :**\
     Since we have spatial data, we need to check for any spatial dependence between observations, by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
@@ -713,11 +712,22 @@ testSpatialAutocorrelation(simulateResiduals(glm_NB),
 ```
 
 For each point, we have a local Moran index.\
-Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. There is significant positive autocorrelation (p-value \< 2.2e-16) : this means that two observations close together are more likely to be similar than two observations far apart. On the contrary, when there is no spatial dependance, in a stationary process, the residuals are spatially random.     
-Here, the intensities and the colours of the points vary a lot, indicating global non-stationarity of the relationship between `Sightings` and the explanatory variables.   
+Here, the observed Moran's index is higher than the expected. This indicates a tendency towards clustering. There is significant positive autocorrelation (p-value \< 2.2e-16) : this means that two observations close together are more likely to be similar than two observations far apart. On the contrary, when there is no spatial dependance, in a stationary process, the residuals are spatially random.\
+Here, the intensities and the colours of the points vary a lot, indicating global non-stationarity of the relationship between `Sightings` and the explanatory variables.
 
 -   **First visualisation of result :**\
-    Even if our model is not correct because of spatial autocorrelation, we can still visualize the predictors of the Negative Binomial GLM.
+    Even if our model is not correct because of spatial autocorrelation, we can still write the equation and visualize the predictors of the Negative Binomial GLM.    
+
+$Sightings$ ~ $NB(\mu, \phi)$      
+$$
+\log(\mu_i) =
+`r round(coef[1], 3)` +
+`r round(coef[2], 3)` \times \text{Rainforest.P} +
+`r round(coef[3], 3)` \times \text{Residential.P} +
+`r round(coef[4], 3)` \times \text{Fruit.P} +
+`r round(coef[5], 3)` \times \text{Total\_Road}
++ \varepsilon_i
+$$
 
 ```{r}
 #|label: plot_alleffects
@@ -725,9 +735,9 @@ Here, the intensities and the colours of the points vary a lot, indicating globa
 
 plot(allEffects(glm_NB), ci.style = "bands", type = "response")
 ```
-**For visibility reasons, the scale of the Y-axis is adapted to each variable, so the effects visible on the plot are not visually comparable.**
-It shows the effects plotted on the scale of the linear predictor, but the vertical axis is labelled on the response scale. This preserves the linear structure of the model while permitting interpretation on what is usually a more familiar scale (@R_effects)  
-The model shows very high confidence intervals for `Residential.P` (with an upper bound of 2 500 sightings predicted, whereas the maximum number per cell was 572). This can be explained by the low number of high `Residential.P` data points (see small bars on the X-axis). The same applies to Fruit.P, even though the upper limit of the confidence interval only rises to 80 sightings.  
+
+**For visibility reasons, the scale of the Y-axis is adapted to each variable, so the effects visible on the plot are not visually comparable.** It shows the effects plotted on the scale of the linear predictor, but the vertical axis is labelled on the response scale. This preserves the linear structure of the model while permitting interpretation on what is usually a more familiar scale (@R_effects)\
+The model shows very high confidence intervals for `Residential.P` (with an upper bound of 2 500 sightings predicted, whereas the maximum number per cell was 572). This can be explained by the low number of high `Residential.P` data points (see small bars on the X-axis). The same applies to Fruit.P, even though the upper limit of the confidence interval only rises to 80 sightings.
 
 ### Geostatistical model GWR
 
@@ -784,7 +794,8 @@ qqline(cassowary$Y_1, col='red', lwd=2)
 
 There are still many low values and a non-normal distribution of the variable to be explained, despite the log transformation.
 
--   **Linear model with log(Sightings + 1) :**    
+-   **Linear model with log(Sightings + 1) :**\
+
 ```{r model lm}
 try_linear <- lm(Y_1 ~ Rainforest.P + Residential.P + Fruit.P + Total_Road, 
                  data = cassowary)
@@ -794,6 +805,7 @@ summary(try_linear)
 This makes the distribution of the response variable closer to a Gaussian, allowing classical GWR (gwr) to be used on a linear model.
 
 -   **Residuals normality and Homoscedasticity :**\
+
 ```{r}
 #| label: fig-lm_check
 #| fig-cap: "Verification of the validity conditions of the lm model on residues"
@@ -801,6 +813,7 @@ This makes the distribution of the response variable closer to a Gaussian, allow
 par(mfrow = c(2, 2))
 plot(try_linear, pch = 19, col = "blue")
 ```
+
 The first plot shows a rejection of the assumption of homoscedasticity of the residuals (normal QQ-plot). The second graph shows non-normality of the residuals, which should follow the first bisector. The fourth plot shows the presence of outliers, whose value, even when logged, strongly influences the model. Overall, we can see that the linear model is not suitable, even with a log +1 transformation of `Sightings`.
 
 -   **Spatial autocorrelation test :**\
@@ -817,7 +830,7 @@ Presence of spatial autocorrelation
 
 #### GWR Model
 
-To apply the **GWR model**, we have to define the SpatialPointsDataFrame with both the variables and the coordinates in an object called `geocass.`  
+To apply the **GWR model**, we have to define the SpatialPointsDataFrame with both the variables and the coordinates in an object called `geocass.`\
 At this stage, we also optimize the bandwidth (a metric representing the distance between points or the number of neighbors used in each regression) for the kernel function (neighborhood weighting function), then we run the GWR model. The bandwith is determined using the spatial autocorrelogram, and most notably, the influence of the neighbors is weighted by a decreasing function of distance.
 
 ```{r}
@@ -886,7 +899,7 @@ gwr_signif_all <- lapply(vars, function(v) {
 ```
 
 ```{r}
-#| label: fig-GWR_Rainforest
+#| label: fig-GWR_Resid
 #| fig-cap: "GWR local coefficients for Residential.P"
 
 ggplot(gwr_signif_all %>% filter(variable == "Residential.P"),
@@ -899,7 +912,7 @@ ggplot(gwr_signif_all %>% filter(variable == "Residential.P"),
 ```
 
 ```{r}
-#| label: fig-GWR_Rainforest
+#| label: fig-GWR_fruit
 #| fig-cap: "GWR local coefficients for Fruit.P"
 #
 ggplot(gwr_signif_all %>% filter(variable == "Fruit.P"),
@@ -912,7 +925,7 @@ ggplot(gwr_signif_all %>% filter(variable == "Fruit.P"),
 ```
 
 ```{r}
-#| label: fig-GWR_Rainforest
+#| label: fig-GWR_road
 #| fig-cap: "GWR local coefficients for Total_Road"
 
 ggplot(gwr_signif_all %>% filter(variable == "Total_Road"),
@@ -927,7 +940,7 @@ ggplot(gwr_signif_all %>% filter(variable == "Total_Road"),
 #### Visualization of all the GWR local coefficients at the same time
 
 ```{r}
-#| label: fig-GWR_Rainforest
+#| label: fig-GWR_all
 #| fig-cap: "Local Maps of GWR coefficients (Sightings log transformed)"
  
 ggplot(gwr_signif_all,
@@ -1001,7 +1014,7 @@ table(cassowary$Strikes)
 prop.table(table(cassowary$Strikes)) * 100
 ```
 
-There are some outlier values in the `Strikes` distribution (@fig-strikes_descr). While most of values stop at 5 strikes per grid cell, there is one with 13 strikes listed. As we have no information on the temporal observations, we will include all values in the model. But the data will be discussed because, in the context of a citizen science program, it is possible for citizens to overcount. Here, strikes can sometimes be double-counted.   
+There are some outlier values in the `Strikes` distribution (@fig-strikes_descr). While most of values stop at 5 strikes per grid cell, there is one with 13 strikes listed. As we have no information on the temporal observations, we will include all values in the model. But the data will be discussed because, in the context of a citizen science program, it is possible for citizens to overcount. Here, strikes can sometimes be double-counted.
 
 As for the `Sightings` variable, `Strikes` correspond to count data, and we will use a **Generalized Linear Model with a Poisson distribution**.
 
@@ -1188,20 +1201,21 @@ glm_nb_strikes <- glm.nb(Strikes ~ scale(Total_Road, scale = FALSE) +
                            scale(Dfruit, scale = FALSE) + LogSightings + Rainforest.P,
                          data = cassowary)
 summary(glm_nb_strikes)
+coef <- glm_nb_strikes$coefficients
 ```
 
 -   **Dispersion check :**
 
 ```{r}
-#|label: fig-dharma_NB2
-#|fig-cap: "DHARMa check for dispersion, outliers and zero-inflation in the model residuals"
+#| label: fig-dharma_NB2
+#| fig-cap: "DHARMa check for dispersion, outliers and zero-inflation in the model residuals"
 simresnb <- simulateResiduals(glm_nb_strikes)
 testDispersion(simresnb)
 plot(simulateResiduals(glm_nb_strikes))
 testZeroInflation(simresnb)
 ```
 
-With the negative binomial distribution, there is no more overdispersion of the residuals (@fig-dharma_NB2, @dharma_hartig). The model respect the assumption on the residuals.
+With the negative binomial distribution, there is no more overdispersion of the residuals (@dharma_hartig). The model respect the assumption on the residuals.
 
 -   **Spatial autocorrelation check :**\
     Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
@@ -1216,17 +1230,28 @@ testSpatialAutocorrelation(simulateResiduals(glm_nb_strikes),
 
 There is no spatial autocorrelation in this model.
 
-Since our model seems correct, we can visualized the predictors :
+Since our model seems correct, we can write the model equation and visualized the predictors :    
+$Strikings$ ~ $NB(\mu, \phi)$   
+$$
+\log(\mu_i) =
+`r round(coef[1], 3)` +
+`r round(coef[2], 3)` \times \text{Total\_Road} +
+`r round(coef[3], 4)` \times \text{Dfruit} +
+`r round(coef[4], 3)` \times \log(\text{Sightings}+1) +
+`r round(coef[5], 3)` \times \text{Rainforest.P}
++ \varepsilon_i
+$$
 
 ```{r}
-#|label: fig-plot_alleffects_strikes
-#|fig-cap: "Predictor effects on Strikes"
+#| label: fig-plot_alleffects_strikes
+#| fig-cap: "Predictor effects on Strikes"
 
 plot(allEffects(glm_nb_strikes), ci.style = "bands", type = "response")
 ```
-**For visibility reasons, the scale of the Y-axis is adapted to each variable, so the effects visible on the plot are not visually comparable.**
-The results show that strikes increase exponentially with the abundance `Sightings`(@fig-plot_alleffects_strikes). However, it should be noted that the confidence interval around the number of strikes increases sharply as the number of sightings increases, since there are few high sighting values, as shown by the bars on the X-axis.    
-It also shows a positive linearly relation with the rainforest proportion `Rainforest.P`.
+
+**For visibility reasons, the scale of the Y-axis is adapted to each variable, so the effects visible on the plot are not visually comparable.**\
+The results show that strikes increase exponentially with the abundance `Sightings`(@fig-plot_alleffects_strikes). However, it should be noted that the confidence interval around the number of strikes increases sharply as the number of sightings increases, since there are few high sighting values, as shown by the bars on the X-axis.\
+It also shows a positive linearly relation with the rainforest proportion `Rainforest.P`.\
 Strikes also seem to increase linearly when the distance of the road of fruit crop increase. The opposite result is observed with the total length of the road.
 
 ## Results of Mortality model
