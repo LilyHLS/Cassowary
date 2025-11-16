@@ -40,19 +40,19 @@ Using this data, compiled with the habitat variables and the distance of road lo
 (b) Map of the study area showing the locations of roads and landscape features. The number of sightings and traffic strikes that have occurred are geo-referenced in 1 km grid cells. (from @dwyer_using_2016)
 
 ::: {#tbl-descrva}
-| Variable name                           | Ecological reference                                        |
+| Variable name | Ecological reference |
 |------------------------------------|------------------------------------|
-| `Rainforest.P` (quantitative continue)  | proportion of rainforest within the grid                    |
-| `Residential.P` (quantitative continue) | proportion of residential area within the grid              |
-| `Fruit.P` (quantitative continue)       | proportion of fruit crop within the grid                    |
-| `Other.P` (quantitative continue)       | proportion of other area (pasture, wetland) within the grid |
-| `Total_Road` (quantitative continue)    | length of road within the grid                              |
-| `Sightings` (quantitative counting)     | visual contact of cassowary                                 |
-| `Strikes` (quantitative counting)       | mortality of cassowary due to road traffic                  |
-| `Residential.01` (quantitative binary)  | presence /absence of residential area                       |
-| `Fruit.01` (quantitative binary)        | presence /absence of fruit crop                             |
-| `Dresid` (quantitative continue)        | distance of the road to residential area                    |
-| `Dfruit` (quantitative continue)        | distance of the road to fruit crop area                     |
+| `Rainforest.P` (quantitative continue) | proportion of rainforest within the grid |
+| `Residential.P` (quantitative continue) | proportion of residential area within the grid |
+| `Fruit.P` (quantitative continue) | proportion of fruit crop within the grid |
+| `Other.P` (quantitative continue) | proportion of other area (pasture, wetland) within the grid |
+| `Total_Road` (quantitative continue) | length of road within the grid |
+| `Sightings` (quantitative counting) | visual contact of cassowary |
+| `Strikes` (quantitative counting) | mortality of cassowary due to road traffic |
+| `Residential.01` (quantitative binary) | presence /absence of residential area |
+| `Fruit.01` (quantitative binary) | presence /absence of fruit crop |
+| `Dresid` (quantitative continue) | distance of the road to residential area |
+| `Dfruit` (quantitative continue) | distance of the road to fruit crop area |
 
 Table of the cassowary variables and their ecological meaning.
 :::
@@ -716,9 +716,9 @@ Here, the observed Moran's index is higher than the expected. This indicates a t
 Here, the intensities and the colours of the points vary a lot, indicating global non-stationarity of the relationship between `Sightings` and the explanatory variables.
 
 -   **First visualisation of result :**\
-    Even if our model is not correct because of spatial autocorrelation, we can still write the equation and visualize the predictors of the Negative Binomial GLM.    
+    Even if our model is not correct because of spatial autocorrelation, we can still write the equation and visualize the predictors of the Negative Binomial GLM.
 
-$Sightings$ ~ $NB(\mu, \phi)$      
+$Sightings$ \~ $NB(\mu, \phi)$\
 $$
 \log(\mu_i) =
 `r round(coef[1], 3)` +
@@ -844,8 +844,8 @@ lmgwrD <- gwr(log(Sightings+1) ~ Rainforest.P + Residential.P + Fruit.P + Total_
 summary(lmgwrD)
 ```
 
-The main interesting output is the SDF : the variables (intercept) and `Rainforest.P`, `Residential.P`, `Fruit.P` and `Total_Road`give the regression coefficients.\
-`Intercept.se` and `Rainforest.P_se`, `Residential.P_se`, `Fruit.P_se` and `Total_Road_se`give the coefficient standard errors.
+The main interesting output is the SDF : the variables (intercept) and `Rainforest.P`, `Residential.P`, `Fruit.P` and `Total_Road` give the regression coefficients.\
+`Intercept.se` and `Rainforest.P_se`, `Residential.P_se`, `Fruit.P_se` and `Total_Road_se` give the coefficient standard errors.
 
 ```{r}
 names(lmgwrD$SDF)
@@ -1133,7 +1133,7 @@ plot(correlog(cassowary[,2:3], cassowary$Rainforest.P, method = "Moran", nbclass
 abline(h = 0, lty = 2)
 ```
 
-As for the first problematic, we analysed spatial dependency with correlograms based on Moran's index (@fig-correlograms2). High values mean that sites are correlated with each other, with red dots indicating significant correlation. For each variable, the values seem to be correlated up to around 10 km, which probably corresponds to the cassowary's distribution area in relation to the limits of the rainforest.
+As for the first problematic, we analysed spatial dependency with correlograms based on Moran's index (@fig-correlograms2). High values mean that sites are correlated with each other, with red dots indicating significant correlation. For each variable, the values seem to be correlated up to around 10 km, which probably corresponds to the cassowary's distribution area in relation to the limits of the rainforest. As suggested by the results of the previous model, this spatial scale may also be related to reports of strikes and sightings in a particular area, where people are more likely to contribute data for citizen science.
 
 ### GLM with Poisson Distribution
 
@@ -1230,8 +1230,8 @@ testSpatialAutocorrelation(simulateResiduals(glm_nb_strikes),
 
 There is no spatial autocorrelation in this model.
 
-Since our model seems correct, we can write the model equation and visualized the predictors :    
-$Strikings$ ~ $NB(\mu, \phi)$   
+Since our model seems correct, we can write the model equation and visualized the predictors :\
+$Strikings$ \~ $NB(\mu, \phi)$\
 $$
 \log(\mu_i) =
 `r round(coef[1], 3)` +
@@ -1272,4 +1272,4 @@ The lack of information on temporal observations also caused issues in the analy
 In conclusion, our results should be treated with caution as they are based on citizen science data. Indeed, our models are probably not quite adapted to this type of data, which demands great caution when analyzing it. The model for spatial autocorrelation in cassowary abundance estimation is not appropriate for the Poisson distribution of the data, and applying a log transformation to the Y count variable is not recommended (@ohara_log), particularly in the presence of 0, that can be distorted.\
 So, one area for improvement in our study could be to better account for both spatial dependence and non-Gaussian distribution in the sighting model. This can be achieved by adding covariance structures (spherical or Gaussian, since we have patch structure), including the spatial coordinates of the points (@cov_struct), which can be done using the *glmmTMB* package (@glmmtmb).
 
-To reduce cassowary strike mortality and preserve its natural habitat, limiting new road construction, reducing deforestation and implementing wildlife crossing remain the most effective strategies. Wildlife crossings could reduce fragmentation and road collision at the same time, making them one of the best solution currently. Ultimately, preventing further nature destruction remains the best long-term solution (but we'll see the COP30 and UE decisions :')... But we are scientists and not politicians
+To reduce cassowary strike mortality and preserve its natural habitat, limiting new road construction, reducing deforestation and implementing wildlife crossing remain the most effective strategies. Wildlife crossings could reduce fragmentation and road collision at the same time, making them one of the best solution currently. Since cassowaries depend on fruit crops, it is important to keep them away from roads to prevent strikes accidents. Ultimately, preventing further nature destruction remains the best long-term solution (but we'll see the COP30 and UE decisions :')... But we are scientists and not politicians
