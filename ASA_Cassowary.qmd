@@ -244,18 +244,15 @@ plot(cassowary$Sightings ~ cassowary$Other.P, pch = 16,
      col = 'olivedrab4', xlab = 'Proportion of wetlands and pasture', 
      ylab = 'Sightings')
 
-
 # Total_Road
 plot(cassowary$Sightings ~ cassowary$Total_Road, pch = 16, 
      col = 'olivedrab4', xlab = 'Road length inside of the grid', 
      ylab = 'Sightings')
 
-
 # Dfruit
 plot(cassowary$Sightings ~ cassowary$Dfruit, pch = 16, 
      col = 'olivedrab4', xlab = 'Distance between road and fruit crops', 
      ylab = 'Sightings')
-
 
 # Dresid
 plot(cassowary$Sightings ~ cassowary$Dresid, pch = 16, 
@@ -606,9 +603,12 @@ plot(simout)
 
 Here, there is overdispersion, it can be due to outliers, model misfit, missing interactions or zero-inflation.
 
-We can take a closer look at the problems with the model (zero-inflation and overdispersion) :
+We can take a closer look at the issues on the model (zero-inflation and overdispersion) :
 
 ```{r}
+#|label: fig-dharma1
+#|fig-cap: "Zero-inflation and dispersion check on the residuals with DHARMa package"
+
 testDispersion(simout)
 testZeroInflation(simout)
 ```
@@ -688,7 +688,6 @@ p  <- length(coef(glm_NB))
 sum(E1^2) / (N - p)
 ```
 
-
 ```{r}
 #| label: fig-semivariog_NB
 #| fig-cap: "Semi-variogram of the residuals of the negative binomial model "
@@ -705,6 +704,9 @@ We still have an abnormal semi variogram, showing spatial dependence with a non-
     Since we have spatial data, we need to check for any spatial dependence between observations, by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
 
 ```{r}
+#|label: fig-dharmaspat_NB
+#|fig-cap: "Spatial autocorrelation check on NB model residuals with DHARMa package"
+
 # Dharma procedure :
 testSpatialAutocorrelation(simulateResiduals(glm_NB), 
                            x = cassowary$longitude, y = cassowary$latitude)
@@ -721,10 +723,11 @@ Here, the intensities and the colours of the points vary a lot, indicating globa
 #|label: plot_alleffects
 #|fig-cap: "Predictor effects on Sightings"
 
-plot(allEffects(glm_NB), ci.style = "bands")
+plot(allEffects(glm_NB), ci.style = "bands", type = "response")
 ```
-
-It shows the effects plotted on the scale of the linear predictor, but the vertical axis is labelled on the response scale. This preserves the linear structure of the model while permitting interpretation on what is usually a more familiar scale (@R_effects)
+**For visibility reasons, the scale of the Y-axis is adapted to each variable, so the effects visible on the plot are not visually comparable.**
+It shows the effects plotted on the scale of the linear predictor, but the vertical axis is labelled on the response scale. This preserves the linear structure of the model while permitting interpretation on what is usually a more familiar scale (@R_effects)  
+The model shows very high confidence intervals for `Residential.P` (with an upper bound of 2 500 sightings predicted, whereas the maximum number per cell was 572). This can be explained by the low number of high `Residential.P` data points (see small bars on the X-axis). The same applies to Fruit.P, even though the upper limit of the confidence interval only rises to 80 sightings.  
 
 ### Geostatistical model GWR
 
@@ -737,6 +740,9 @@ We define the *SpatialPointsDataFrame* with both variables and coordinates, and 
 -   **Distribution of Y_1 = log(Sightings + 1)**
 
 ```{r Y1}
+#|label: fig-logsight
+#|fig-cap: "Distribution of log(Sightings +1)"
+
 cassowary$Y_1 = log(cassowary$Sightings + 1)
 
 par(mfrow = c(2, 2),
@@ -788,47 +794,21 @@ summary(try_linear)
 This makes the distribution of the response variable closer to a Gaussian, allowing classical GWR (gwr) to be used on a linear model.
 
 -   **Residuals normality and Homoscedasticity :**\
-
 ```{r}
-plot(try_linear, pch = 19)
+#| label: fig-lm_check
+#| fig-cap: "Verification of the validity conditions of the lm model on residues"
+
+par(mfrow = c(2, 2))
+plot(try_linear, pch = 19, col = "blue")
 ```
-
-```{r ResidNorm, include=TRUE, fig.height=4, fig.width=6}
-par(mfrow=c(1,2))
-# Histogram
-hist(try_linear$residuals,col='blue3',xlab="residuals",main="Check Normality")
-# Quantile-Quantile plot
-qqnorm(try_linear$residuals,pch=16,col='blue3',xlab='')
-qqline(try_linear$residuals,col='red',lwd=2)
-```
-
--   **Homoscedasticity :**\
-
-```{r Residhomo, include=TRUE, fig.height=3, fig.width=6}
-par(mfrow=c(1,3))
-
-# residuals vs fitted
-plot(residuals(try_linear)~fitted(try_linear)
-      , col='blue3'
-      , pch=16)
-abline(h = 0)
-
-# residuals against Rainforest.P
-plot(residuals(try_linear)~ cassowary$Rainforest.P, 
-         pch=16,
-         col="blue3",
-         ylab = "Residuals",
-         xlab = "Rainforest.P",
-         main = "")
-abline(h = 0)
-```
-
-No comment...
+The first plot shows a rejection of the assumption of homoscedasticity of the residuals (normal QQ-plot). The second graph shows non-normality of the residuals, which should follow the first bisector. The fourth plot shows the presence of outliers, whose value, even when logged, strongly influences the model. Overall, we can see that the linear model is not suitable, even with a log +1 transformation of `Sightings`.
 
 -   **Spatial autocorrelation test :**\
 
 ```{r}
-# Dharma procedure :
+#| label: fig-Dharma_spat_lm
+#| fig-cap: "Spatial dependance check on linear model with log(Sightings + 1) (DHARMa)"
+
 testSpatialAutocorrelation(simulateResiduals(try_linear), 
                            x = cassowary$longitude, y = cassowary$latitude)
 ```
@@ -881,7 +861,7 @@ gwr_signif_all <- lapply(vars, function(v) {
   classe_beta <- ifelse(beta < 0, "negative",
                         ifelse(beta > 0, "positive", "zero"))
   
-  classe_p <- ifelse(p_val < 0.05, "p<0.05", "p>0.05")
+  classe_p <- ifelse(p_val < 0.05, "p < 0.05", "p > 0.05")
   
   # Local Data frame 
   data.frame(variable = v, x = coordinates(geocass)[,1], y = coordinates(geocass)[,2],
@@ -893,61 +873,70 @@ gwr_signif_all <- lapply(vars, function(v) {
 #### Visualization of the GWR local coefficients for each variable
 
 ```{r}
+#| label: fig-GWR_Rainforest
+#| fig-cap: "GWR local coefficients for Rainforest.P"
+
  ggplot(gwr_signif_all %>% filter(variable == "Rainforest.P"),
   aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
   geom_point() +
-  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
+  scale_color_manual(values = c("p < 0.05" = "red", "p > 0.05" = "blue")) +
   scale_shape_manual(values = c("positive" = 16, "negative" = 17, "zero" = 15)) +
   scale_size_continuous(range = c(1, 8)) +
-  theme_bw() +
-  ggtitle("GWR local coefficients for Rainforest.P")
+  theme_bw()
 ```
 
 ```{r}
+#| label: fig-GWR_Rainforest
+#| fig-cap: "GWR local coefficients for Residential.P"
+
 ggplot(gwr_signif_all %>% filter(variable == "Residential.P"),
   aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
   geom_point() +
-  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
+  scale_color_manual(values = c("p < 0.05" = "red", "p > 0.05" = "blue")) +
   scale_shape_manual(values = c("positive" = 16, "negative" = 17, "zero" = 15)) +
   scale_size_continuous(range = c(1, 8)) +
-  theme_bw() +
-  ggtitle("GWR local coefficients for Residential.P")
+  theme_bw()
 ```
 
 ```{r}
+#| label: fig-GWR_Rainforest
+#| fig-cap: "GWR local coefficients for Fruit.P"
+#
 ggplot(gwr_signif_all %>% filter(variable == "Fruit.P"),
   aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
   geom_point() +
-  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
+  scale_color_manual(values = c("p < 0.05" = "red", "p > 0.05" = "blue")) +
   scale_shape_manual(values = c("positive" = 16, "negative" = 17, "zero" = 15)) +
   scale_size_continuous(range = c(1, 8)) +
-  theme_bw() +
-  ggtitle("GWR local coefficients for Fruit.P")
+  theme_bw()
 ```
 
 ```{r}
+#| label: fig-GWR_Rainforest
+#| fig-cap: "GWR local coefficients for Total_Road"
+
 ggplot(gwr_signif_all %>% filter(variable == "Total_Road"),
   aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
   geom_point() +
-  scale_color_manual(values = c("p<0.05" = "red", "p>0.05" = "blue")) +
+  scale_color_manual(values = c("p < 0.05" = "red", "p > 0.05" = "blue")) +
   scale_shape_manual(values = c("positive" = 16, "negative" = 17, "zero" = 15)) +
   scale_size_continuous(range = c(1, 8)) +
-  theme_bw() +
-  ggtitle("GWR local coefficients for Total_Road")
+  theme_bw()
 ```
 
 #### Visualization of all the GWR local coefficients at the same time
 
 ```{r}
-#To visualize all the variables in a single window : 
+#| label: fig-GWR_Rainforest
+#| fig-cap: "Local Maps of GWR coefficients (Sightings log transformed)"
+ 
 ggplot(gwr_signif_all,
        aes(x = x, y = y, color = classe_p, shape = classe_beta, size = beta)) +
   geom_point() +
   facet_wrap(~ variable, scales = "free") +
   scale_color_manual(values = c("p < 0.05" = "red", "p > 0.05" = "blue")) +
   scale_shape_manual(values = c("positive" = 16, "negative" = 17)) +
-  theme_bw() +
-  ggtitle("Local Maps of GWR coefficients (Sightings log transformed)")
+  theme_bw()
 ```
 
 ## Results
@@ -1052,6 +1041,9 @@ We will keep the log+1 transformation of the variable `Sigthings`, as there are 
 ### Potential relationships between response variable (Strikes) and explanatory variables
 
 ```{r}
+#| label: fig-relatio
+#| fig-cap: "Potential relationships between response variable (Strikes) and explanatory variables"
+
 par(mfrow=c(3, 2))
 
 # Total_Road
@@ -1091,6 +1083,7 @@ It seems to be an interaction between the `LogSightings` and `Strikes`, as well 
 ```{r correlation mortality X}
 #| label: fig-corrplot_strikes
 #| fig-cap : "Correlation between explain variables for strikes"
+
 corelation <- cor(road)
 corrplot(corelation, type = "upper", method = "number")
 ```
@@ -1104,6 +1097,7 @@ Although there is a correlation between `Sightings` and `LogSightings`, we will 
 ```{r}
 #| label: fig-correlograms2
 #| fig-cap: "Correlograms for road link variables and sightings"
+
 par(mfrow = c(2, 3))
 plot(correlog(cassowary[, 2:3], cassowary$Strikes, method = "Moran", nbclass = 12),
      main = "Strikes")
@@ -1153,13 +1147,16 @@ summary(glm_pois_strikes)
 -   **Dispersion and Zero-inflation check :**\
 
 ```{r}
+#|label: fig-dharma_pois
+#|fig-cap: "DHARMa check for dispersion, outliers and zero-inflation in the model residuals"
+
 simrespois <- simulateResiduals(glm_pois_strikes)
 testDispersion(simrespois)
 testZeroInflation(simrespois)
 plot(simulateResiduals(glm_pois_strikes))
 ```
 
-With the Poisson distribution, residuals are over dispersed. So we switch to a Negative Binomial distribution. To test the zero-inflation and the dispersion, we also apply the function implemented in DHARMa package (@dharma_hartig). The check for dispersion shows a significant overdispersion.
+With the Poisson distribution, residuals are over dispersed (fig-dharma_pois). So we switch to a Negative Binomial distribution. To test the zero-inflation and the dispersion, we also apply the function implemented in DHARMa package (@dharma_hartig). The check for dispersion shows a significant overdispersion.
 
 ### GLM with Negative Binomial distribution
 
@@ -1196,34 +1193,41 @@ summary(glm_nb_strikes)
 -   **Dispersion check :**
 
 ```{r}
+#|label: fig-dharma_NB2
+#|fig-cap: "DHARMa check for dispersion, outliers and zero-inflation in the model residuals"
 simresnb <- simulateResiduals(glm_nb_strikes)
 testDispersion(simresnb)
 plot(simulateResiduals(glm_nb_strikes))
 testZeroInflation(simresnb)
 ```
 
-With the negative binomial distribution, there is no more overdispersion of the residuals (@dharma_hartig). The model respect the assumption on the residuals.
+With the negative binomial distribution, there is no more overdispersion of the residuals (@fig-dharma_NB2, @dharma_hartig). The model respect the assumption on the residuals.
 
 -   **Spatial autocorrelation check :**\
     Since we have spatial data, we need to check whether there is any spatial dependence between observations by looking for spatial autocorrelation in the model residuals, with Moran test (@dharma_hartig).
 
 ```{r}
+#| label: fig-Dharma_spat_mortNB
+#| fig-cap: "Spatial dependance check on linear model with log(Sightings + 1) (DHARMa)"
+
 testSpatialAutocorrelation(simulateResiduals(glm_nb_strikes), 
                            x = cassowary$longitude, y = cassowary$latitude)
 ```
 
-Their is no spatial autocorrelation in this model.
+There is no spatial autocorrelation in this model.
 
-Since our model is correct, we can visualized the predictors.
+Since our model seems correct, we can visualized the predictors :
 
 ```{r}
-#|label: plot_alleffects_strikes
+#|label: fig-plot_alleffects_strikes
 #|fig-cap: "Predictor effects on Strikes"
 
 plot(allEffects(glm_nb_strikes), ci.style = "bands", type = "response")
 ```
-
-The results show that strikes increase exponentially with the abundance and positive linearly with the rainforest proportion (@fig-plot_alleffects_strikes). However, this is the case with the log+1 transformation. Strikes also seem to increase linearly when the distance of the road of fruit crop increase. The opposite result is observed with the total length of the road.
+**For visibility reasons, the scale of the Y-axis is adapted to each variable, so the effects visible on the plot are not visually comparable.**
+The results show that strikes increase exponentially with the abundance `Sightings`(@fig-plot_alleffects_strikes). However, it should be noted that the confidence interval around the number of strikes increases sharply as the number of sightings increases, since there are few high sighting values, as shown by the bars on the X-axis.    
+It also shows a positive linearly relation with the rainforest proportion `Rainforest.P`.
+Strikes also seem to increase linearly when the distance of the road of fruit crop increase. The opposite result is observed with the total length of the road.
 
 ## Results of Mortality model
 
